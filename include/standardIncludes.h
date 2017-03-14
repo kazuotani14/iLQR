@@ -14,10 +14,10 @@ const double pi = M_PI;
 const double timeDelta = 0.05; //dt
 
 template<typename T>
-inline T sqr(const T &val){ return val*val; }
+T sqr(const T &val){ return val*val; }
 
 template <typename T>
-inline int sgn(T &val) {return (T(0) < val) - (val < T(0)); }
+int sgn(T &val) {return (T(0) < val) - (val < T(0)); }
 
 template <typename T>
 void print_vec(T vec){

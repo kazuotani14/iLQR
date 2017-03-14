@@ -84,12 +84,18 @@ Eigen::VectorXd LocoCar::dynamics(const Eigen::VectorXd &x, const Eigen::Vector2
     alpha_R = atan((Uy-b*r)/std::abs(Ux));
   }
 
-  Eigen::Vector2d Ff = tire_dyn(Ux, Ux_cmd, mu, mu_spin, G_rear, C_x, C_alpha, alpha_R);
+  // safety that keeps alphas in valid range
+  alpha_F = wrap_to_pi(alpha_F);
+  alpha_R = wrap_to_pi(alpha_R);
+  // std::cout << alpha_F << ' ' << alpha_R << '\n';
+
+  Eigen::Vector2d Ff = tire_dyn(Ux, Ux, mu, mu_spin, G_front, C_x, C_alpha, alpha_F);
   Eigen::Vector2d Fr = tire_dyn(Ux, Ux_cmd, mu, mu_spin, G_rear, C_x, C_alpha, alpha_R);
   double Fxf, Fyf, Fxr, Fyr;
   Fxf = Ff(0); Fyf = Ff(1); Fxr = Fr(0); Fyr = Fr(1);
 
   // Vehicle body dynamics
+  // std::cout << Fxf << ' ' << Fyf << ' ' << Fxr << ' ' << Fyr << '\n';
   double r_dot = (a*Fyf*cos(delta)-b*Fyr)/Iz;
   double Ux_dot = (Fxr-Fyf*sin(delta))/m+r*Uy;
   double Uy_dot = (Fyf*cos(delta)+Fyr)/m-r*Ux;
