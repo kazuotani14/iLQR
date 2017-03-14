@@ -2,6 +2,9 @@
 #include "acrobot.h"
 #include <fstream>
 
+using namespace std;
+using namespace Eigen;
+
 int main()
 {
   int K = 500; // length of trajectory

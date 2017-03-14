@@ -1,12 +1,17 @@
+/*
+Basically just need to provide class with f(dynamics), l(cost), lf(final cost)
+*/
+
 #pragma once
 #include "standardIncludes.h"
 #include "iLQR.h"
 
-struct Acrobot : ILQR
+class Acrobot : public iLQR
 {
   double I1, I2;
   double l1,l2,m1,m2,g;
   double lc1, lc2;
+public:
   void init()
   {
     g = 9.8;
@@ -71,6 +76,7 @@ struct Acrobot : ILQR
     double Kr = 1.0; // penalise torque
     return Ks*Ks*q.dot(q) + Kd*Kd*qdot.dot(qdot) + Kr*Kr*u.dot(u);
   }
+
   virtual double lf(const VectorXd &x)
   {
     Vector2d q = (xd-x).head(2);
