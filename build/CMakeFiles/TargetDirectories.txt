@@ -1,3 +1,0 @@
-/Users/Kazu/Documents/Code/cpp_iLQR/build/CMakeFiles/rebuild_cache.dir
-/Users/Kazu/Documents/Code/cpp_iLQR/build/CMakeFiles/edit_cache.dir
-/Users/Kazu/Documents/Code/cpp_iLQR/build/CMakeFiles/run_iLQR.dir
