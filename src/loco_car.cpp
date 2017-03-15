@@ -56,7 +56,7 @@ Eigen::Vector2d LocoCar::tire_dyn(double Ux, double Ux_cmd, double mu, double mu
 
   F_tire << Fx, Fy;
   return F_tire;
-}
+} //tire_dyn
 
 Eigen::VectorXd LocoCar::dynamics(const Eigen::VectorXd &x, const Eigen::Vector2d &u)
 {
@@ -126,19 +126,21 @@ Eigen::VectorXd LocoCar::dynamics(const Eigen::VectorXd &x, const Eigen::Vector2
   Eigen::VectorXd dx(6);
   dx << Ux_terrain, Uy_terrain, r, Ux_dot, Uy_dot, r_dot;
   return dx;
-}
+} //dynamics
 
+//TODO
 double LocoCar::cost(const Eigen::VectorXd &x, const Eigen::Vector2d &u){
   double cost;
 
   return cost;
-}; // cost function
+}; //cost
 
+//TODO
 double LocoCar::final_cost(const Eigen::VectorXd &x){
   double final_cost;
 
   return final_cost;
-};  // final cost
+};  //final_cost
 
 int main() {
   Eigen::VectorXd x(6);

@@ -19,24 +19,30 @@ class iLQR
   const int n;          // dimension of state vector
   const int m;          // dimension of control vector
   const int T;          // number of state transitions (#timesteps-1)
+  const int n_alpha;
 
-  std::vector<Eigen::VectorXd> xs;
-  std::vector<Eigen::VectorXd> us;
+  // Tracking progress
+  std::vector<Eigen::VectorXd> xs; // states from last trajectory
+  std::vector<Eigen::Matrix2D> us; // controls from last trajectory
   std::vector<Eigen::VectorXd> ls;
   std::vector<Eigen::MatrixXd> Ls;
-  Eigen::VectorXd xd; // target state
 
+  // Stuff relevant at each cycle
   Eigen::Matrix2d control_limits;
-  Eigen::VectorXd u0; //iniital control sequence
-  // trace, for debugging? struct?
+  Eigen::Matrix2d u0; //initial control sequence
+  Eigen::VectorXd x_current;
+  Eigen::VectorXd u_current;
+  Eigen::VectorXd x_d; // target state
 
-  // Helper functions will modify member variables instead of returning values,
+
+  // Helper functions will modify passed-in variables instead of returning values,
   //  because most of them need to return multiple values.
+  void init_traj(Eigen::VectorXd &x_0, Eigen::Matrix2d &u0);
   void forward_pass(Eigen::VectorXd &x0, Eigen::Matrix2d &u, Eigen::MatrixXd &L,
                     Eigen::Matrix2d &x, Eigen::Matrix2d &du, Eigen::VectorXd &alpha);
-  // void back_pass(cx,cu,cxx,cxu,cuu,fx,fu,fxx,fxu,fuu,lambda,regType,lims,u);
-  // void boxQP(H,g,lower,upper,x0,options);
-
+  int back_pass(cx,cu,cxx,cxu,cuu,fx,fu,fxx,fxu,fuu,lambda,regType,lims,u); //TODO
+  // void boxQP(H,g,lower,upper,x0);
+	//function [f,c,fx,fu,fxx,fxu,fuu,cx,cu,cxx,cxu,cuu] = car_dyn_cst(x,u,full_DDP)
 
 public:
   iLQR(): tolFun(pow(10,-5)), tolGrad(pow(10,-5)), maxIter(30), lambda(1),
@@ -47,7 +53,9 @@ public:
     Alpha = new Eigen::VectorXd(11);
     *Alpha << 1.0000, 0.5012, 0.2512, 0.1259, 0.0631, 0.0316, 0.0158, 0.0079, 0.0040, 0.0020, 0.0010;
 
-    // TODO initialize control inputs here
+    // TODO read control inputs from somewhere
+    init_traj(x_0, u0);
+
   }
 
   ~iLQR(){

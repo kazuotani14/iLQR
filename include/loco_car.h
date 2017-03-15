@@ -35,6 +35,6 @@ public:
 
   double cost(const Eigen::VectorXd &x, const Eigen::Vector2d &u);
 
-  double final_cost(const Eigen::VectorXd &x);  // final cost
+  double final_cost(const Eigen::VectorXd &x); 
 
 };
