@@ -2,12 +2,15 @@
 
 int iLQR::back_pass(Eigen::Matrix2d &cx, Eigen::Matrix2d &cu, Eigen::MatrixXd &cxx,
 										Eigen::MatrixXd &cxu, Eigen::MatrixXd &cuu, Eigen::MatrixXd &fx,
-										Eigen::MatrixXd &fu, Eigen::Matrix2d &u)
+										Eigen::MatrixXd &fu, Eigen::Matrix2d &u,
+
+										Eigen::Matrix2d &Vx, Eigen::MatrixXd &Vxx, Eigen::Matrix2d &l,
+										Eigen::MatrixXd &L, Eigen::Vector2d &dV)
 {
 /*
 	INPUTS
 	   cx: 2x(T+1)					cu: 2x(T+1)
-		 cuu: nxnx(T+1)				cxx: nxnx(T+1)		cuu: 2x2x(T+1)
+		 cuu: nxnx(T+1)				cxx: nxnx(T+1)	cuu: 2x2x(T+1)
 		 fx: nxnx(T+1)				fu: nx2x(T+1)		fxx: none
 		 fxu: None						fuu: none				u: 2xT
   OUTPUTS

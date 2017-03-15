@@ -22,7 +22,7 @@ class iLQR
   const int n_alpha;
 
   // Tracking progress
-  std::vector<Eigen::VectorXd> xs; // states from last trajectory
+  std::vector<Eigen::Matrix2D> xs; // states from last trajectory
   std::vector<Eigen::Matrix2D> us; // controls from last trajectory
   std::vector<Eigen::VectorXd> ls;
   std::vector<Eigen::MatrixXd> Ls;
@@ -64,4 +64,8 @@ public:
 
   void generate_trajectory(const Eigen::VectorXd &x_0, const Eigen::VectorXd &x_d, int trajectoryLength, int nControlInputs);
 
+  //virtual functions, to be overridden in LocoCar
+  virtual Eigen::VectorXd dynamics(const Eigen::MatrixXd x, const Eigen::Vector2d  u) = 0; //dynamics
+  virtual double cost(const Eigen::VectorXd x, const Eigen::Vector2d u) = 0;
+  virtual double final_cost(const Eigen::VectorXd x);
 };

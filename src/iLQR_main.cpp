@@ -36,7 +36,7 @@ void iLQR::generate_trajectory(const Eigen::VectorXd &x_0, const Eigen::VectorXd
 	Eigen::MatrixXd L; //2xnxT
 	Eigen::Matrix2d l; //2xT
 	Eigen::Matrix2d du; //2*T double
-	Eigen::Vector2d alpha; //  1x1 or 11x1
+	Eigen::Vector2d alpha; //1x1 or 11x1
 	Eigen::Matrix2d cx; //2x(T+1)
 	Eigen::Matrix2d cu: //2x(T+1)
 	Eigen::MatrixXd cuu; //nxnx(T+1)
@@ -67,6 +67,7 @@ void iLQR::generate_trajectory(const Eigen::VectorXd &x_0, const Eigen::VectorXd
 		// STEP 1: Forward pass, differentiate dynamics and cost along new trajectory
 		if flgChange{
 			// TODO update fx,fu,fxx,fxu,fuu,cx,cu,cxx,cxu,cuu with DYNCST
+			car_dynamics_and_cost(x,u,  f,c,fx,fu,fxx,fxu,fuu,cx,cu,cxx,cxu,cuu, 1);
 			flgChange = 0;
 		}
 

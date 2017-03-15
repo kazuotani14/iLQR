@@ -31,10 +31,10 @@ public:
                   Iz(0.045), mu(0.75), mu_spin(0.2), a(0.11372),
                   G_front(12.852550506), G_rear(10.200949494) { std::cout << "constructed\n";}
 
-  Eigen::VectorXd dynamics(const Eigen::VectorXd &x, const Eigen::Vector2d  &u); //dynamics
+  virtual Eigen::VectorXd dynamics(const Eigen::VectorXd &x, const Eigen::Vector2d  &u); //dynamics
 
-  double cost(const Eigen::VectorXd &x, const Eigen::Vector2d &u);
+  virtual double cost(const Eigen::VectorXd &x, const Eigen::Vector2d &u);
 
-  double final_cost(const Eigen::VectorXd &x); 
+  virtual double final_cost(const Eigen::VectorXd &x);
 
 };

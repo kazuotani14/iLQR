@@ -1,18 +1,24 @@
 Test everything individually by replicating function, testing with multiple
 inputs, and comparing vs matlab.
-Best way to do this? Just make a main in the function file and test on its own?
-Will have to gcc or change cmakelists
+Write tests for functions before starting implementation (if it's simple enough)
+Best way to do this - refactor into a standalone function during testing?
 
 Stuff to do (in approximate order)
 - LocoCar::cost
 - LocoCar::final_cost
+- iLQR::get_dynamics_and_cost
 - iLQR::init_traj
-- iLQR::car_dynamics_and_cost
 - step 2 in iLQR_main
 - step 3 in iLQR_main
 - iLQR::forward_pass
 - iLQR::backward_pass
 - printing stuff in iLQR_main
 - simple version in boxQP
-- test
+- write final control sequence and states to text file
+- test whole thing and see if output looks reasonable
 - iLQR::boxQP
+
+
+Later on:
+- refactor to completely separate iLQR class from Model class
+- make skeleton for new Model class

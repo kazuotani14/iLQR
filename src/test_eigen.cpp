@@ -27,7 +27,7 @@ int main()
   m(0,1) = -1;
   m(1,1) = m(1,0) + m(0,1);
 
-  VectorXd v(5);
+  VectorXd v;
   v << 1, 2, 3, 4, 5;
   //v.head(3), v.tail(2)
   //std::abs(1.3)

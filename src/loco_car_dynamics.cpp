@@ -58,7 +58,7 @@ Eigen::Vector2d LocoCar::tire_dyn(double Ux, double Ux_cmd, double mu, double mu
   return F_tire;
 } //tire_dyn
 
-Eigen::VectorXd LocoCar::dynamics(const Eigen::VectorXd &x, const Eigen::Vector2d &u)
+virtual Eigen::VectorXd LocoCar::dynamics(const Eigen::VectorXd &x, const Eigen::Vector2d &u) override
 {
   double pos_x = x(0); double pos_y = x(1); double pos_phi = x(2);
   double Ux = x(3); double Uy = x(4); double r = x(5);
@@ -128,28 +128,16 @@ Eigen::VectorXd LocoCar::dynamics(const Eigen::VectorXd &x, const Eigen::Vector2
   return dx;
 } //dynamics
 
-//TODO
-double LocoCar::cost(const Eigen::VectorXd &x, const Eigen::Vector2d &u){
-  double cost;
-
-  return cost;
-}; //cost
-
-//TODO
-double LocoCar::final_cost(const Eigen::VectorXd &x){
-  double final_cost;
-
-  return final_cost;
-};  //final_cost
-
-int main() {
-  Eigen::VectorXd x(6);
-  x << 1,2,3,1,2,3;
-  Eigen::Vector2d u(1,1);
-
-  LocoCar loco;
-  Eigen::VectorXd dx(6);
-  dx = loco.dynamics(x,u);
-  print_vec(dx);
-  return 0;
-}
+// TESTING
+// int main() {
+//   Eigen::VectorXd x(6);
+//   x << 1,2,3,1,2,3;
+//   Eigen::Vector2d u(1,1);
+//
+//   LocoCar loco;
+//   Eigen::VectorXd dx(6);
+//   dx = loco.dynamics(x,u);
+//   print_vec(dx);
+//   std::cout << "Should be: \n -1.2722, -1.8389, 3.0000, 8.0671, -5.7746, 2.9479\n";
+//   return 0;
+// }

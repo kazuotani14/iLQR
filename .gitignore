@@ -42,3 +42,5 @@
 /build/cmake_install.cmake
 /build/run_iLQR
 /build/test_dynamics
+/build/CMakeFiles/Progress/3
+/build/CMakeFiles/Progress/count.txt
