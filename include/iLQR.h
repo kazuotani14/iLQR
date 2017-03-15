@@ -107,7 +107,6 @@ public:
         // Levenberg-Marquardt heuristic (at end of this loop)
         // [Note: this is different from the 2012 paper, more like 2014]
         SelfAdjointEigenSolver<MatrixXd> eigenSolver(H);
-        ASSERT(eigenSolver.info() == Success);
         VectorXd eigenValues = eigenSolver.eigenvalues();
         for (int i = 0; i<eigenValues.size(); i++)
         {

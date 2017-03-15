@@ -1,10 +1,8 @@
-/*
-Basically just need to provide class with f(dynamics), l(cost), lf(final cost)
-*/
+#ifndef _LOCO_CAR_H_
+#define _LOCO_CAR_H_
 
-#pragma once
 #include "standardIncludes.h"
-#include "iLQR2.h"
+#include "iLQR.h"
 
 class LocoCar : public iLQR
 {
@@ -26,15 +24,22 @@ class LocoCar : public iLQR
   Eigen::Vector2d tire_dyn(double Ux, double Ux_cmd, double mu, double mu_slide,
                     double Fz, double C_x, double C_alpha, double alpha);
 
+  void finite_difference( )
+
 public:
+
+  Eigen::Vector2d obs; //position of obstacle in map frame. set obs(0) to 9999 when it doesn't exist
+
   LocoCar(): m(2.35), g(9.81), L(0.257), b(0.14328), C_x(50), C_alpha(45),
-                  Iz(0.045), mu(0.75), mu_spin(0.2), a(0.11372),
-                  G_front(12.852550506), G_rear(10.200949494) { std::cout << "constructed\n";}
+             Iz(0.045), mu(0.75), mu_spin(0.2), a(0.11372), G_front(12.852550506),
+             G_rear(10.200949494) { }
 
-  virtual Eigen::VectorXd dynamics(const Eigen::VectorXd &x, const Eigen::Vector2d  &u); //dynamics
+  Eigen::VectorXd dynamics(const Eigen::VectorXd &x, const Eigen::Vector2d &u); //dynamics
 
-  virtual double cost(const Eigen::VectorXd &x, const Eigen::Vector2d &u);
+  double cost(const Eigen::VectorXd &x, const Eigen::VectorXd &u);
 
-  virtual double final_cost(const Eigen::VectorXd &x);
+  double final_cost(const Eigen::VectorXd &x);
 
 };
+
+#endif

@@ -27,10 +27,15 @@ int main()
   m(0,1) = -1;
   m(1,1) = m(1,0) + m(0,1);
 
-  VectorXd v;
-  v << 1, 2, 3, 4, 5;
+  // VectorXd v;
+  // v << 1, 2, 3, 4, 5;
   //v.head(3), v.tail(2)
   //std::abs(1.3)
 
-  std::cout << first_val_eigen(v) << std::endl;
+  Eigen::Vector2d cu(1, 1); //control cost
+  cu *= pow(10,-3);
+  Eigen::Vector2d cdu(0.01, 1);  //change in control cost
+  cdu *= pow(10,-1);
+
+  std::cout << cu << std::endl;
 }

@@ -1,4 +1,6 @@
-#pragma once
+#ifndef _STANDARD_INCLUDES_H_
+#define _STANDARD_INCLUDES_H_
+
 #include <vector>
 #include <eigen/Eigen/Core>
 #include <eigen/Eigen/Eigenvalues>
@@ -6,27 +8,19 @@
 #include <iostream>
 #include <math.h>
 
-#ifndef DEBUG
-#define ASSERT(x) {}
-#else
-#define ASSERT(x) assert(x)
-#endif
-
 const double pi = M_PI;
 const double timeDelta = 0.05; //dt
 
 template<typename T>
-T sqr(const T &val){ return val*val; }
+inline T sqr(const T &val){ return val*val; }
 
 template <typename T>
-int sgn(T &val) {return (T(0) < val) - (val < T(0)); }
+inline int sgn(T &val) {return (T(0) < val) - (val < T(0)); }
 
-template <typename T>
-void print_vec(T vec){
-  for (int i=0; i<vec.size(); i++){
-    std::cout << vec(i) << ' ';
-  }
-  std::cout << '\n';
+inline double sabs(double x, double y)
+{
+  //Differentiable "soft" absolute value function
+  return sqrt(sqr(x)+sqr(y))-y;
 }
 
 // Floating-point modulo
@@ -34,7 +28,7 @@ void print_vec(T vec){
 // Similar to matlab's mod(); Not similar to fmod() -   Mod(-3,4)= 1   fmod(-3,4)= -3
 // From http://stackoverflow.com/questions/4633177/c-how-to-wrap-a-float-to-the-interval-pi-pi
 template<typename T>
-T Mod(T x, T y)
+inline T Mod(T x, T y)
 {
     static_assert(!std::numeric_limits<T>::is_exact , "Mod: floating-point type expected");
 
@@ -72,8 +66,38 @@ T Mod(T x, T y)
     return m;
 }
 
-
-double wrap_to_pi(double angle)
+inline double wrap_to_pi(double angle)
 {
   return Mod(angle+pi, 2*pi) - pi;
 }
+
+/*
+ * Eigen-specific helper functions
+ */
+
+template <typename T>
+inline void print_vec(T vec){
+  for (int i=0; i<vec.size(); i++){
+    std::cout << vec(i) << ' ';
+  }
+  std::cout << '\n';
+}
+
+inline Eigen::VectorXd elem_square(const Eigen::VectorXd &vec)
+{
+  return vec.array().square().matrix();
+}
+
+inline Eigen::VectorXd elem_sqrt(const Eigen::VectorXd &vec)
+{
+  return vec.array().sqrt().matrix();
+}
+
+inline Eigen::VectorXd sabs(const Eigen::VectorXd &vec, const Eigen::VectorXd &p)
+{
+  //Differentiable "soft" absolute value function
+  Eigen::VectorXd sum = elem_sqrt(elem_square(vec)+elem_square(p));
+  return sum - p;
+}
+
+#endif
