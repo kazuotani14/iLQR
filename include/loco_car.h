@@ -4,9 +4,9 @@ Basically just need to provide class with f(dynamics), l(cost), lf(final cost)
 
 #pragma once
 #include "standardIncludes.h"
-// #include "iLQR.h"
+#include "iLQR2.h"
 
-class LocoCar //: public iLQR
+class LocoCar : public iLQR
 {
   // Model parameters
   const double m;         // mass (kg)

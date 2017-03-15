@@ -1,4 +1,4 @@
-#include "../include/loco_car.h"
+#include "loco_car.h"
 
 Eigen::Vector2d LocoCar::tire_dyn(double Ux, double Ux_cmd, double mu, double mu_slide,
                   double Fz, double C_x, double C_alpha, double alpha)

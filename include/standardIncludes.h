@@ -4,6 +4,8 @@
 #include <eigen/Eigen/Eigenvalues>
 #include <eigen/Eigen/StdVector>
 #include <iostream>
+#include <math.h>
+
 #ifndef DEBUG
 #define ASSERT(x) {}
 #else
