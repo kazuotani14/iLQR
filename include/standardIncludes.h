@@ -9,7 +9,6 @@
 #include <math.h>
 
 const double pi = M_PI;
-const double timeDelta = 0.05; //dt
 
 template<typename T>
 inline T sqr(const T &val){ return val*val; }

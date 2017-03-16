@@ -123,7 +123,12 @@ Eigen::VectorXd LocoCar::dynamics(const Eigen::VectorXd &x, const Eigen::Vector2
   double Ux_terrain = U*cos(beta+pos_phi);
   double Uy_terrain = U*sin(beta+pos_phi);
 
-  Eigen::VectorXd dx(6);
-  dx << Ux_terrain, Uy_terrain, r, Ux_dot, Uy_dot, r_dot;
-  return dx;
+  Eigen::VectorXd dx(8);
+  dx << Ux_terrain, Uy_terrain, r, Ux_dot, Uy_dot, r_dot, 0, 0;
+
+	Eigen::VectorXd newx;
+	newx = x + timeDelta*dx;
+  newx(6) = u(0); newx(7) = u(1); // store past control inputs for use in cost
+
+  return newx;
 } //dynamics

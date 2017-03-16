@@ -2,7 +2,7 @@
 
 // TODO vectorize so we can do parallel line search. for now, do sequential
 
-double LocoCar::l(const Eigen::VectorXd &x, const Eigen::VectorXd &u)
+double LocoCar::cost(const Eigen::VectorXd &x, const Eigen::VectorXd &u)
 {
   // Input: n=8 state vector(s). 6 states, 2 precalculated du
   // columns of x and u will be each hypothesis
