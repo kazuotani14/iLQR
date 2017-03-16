@@ -1,6 +1,6 @@
 #include "iLQR2.h"
 
-#define eps 0.0001
+#define eps 0.01
 
 // This has a weird condition based on number of outputs in MATLAB code
 // Split into two functions
@@ -31,6 +31,9 @@ void iLQR::compute_derivatives(const VecOfVecXd &x, const VecOfVecXd &u, VecOfMa
 void iLQR::get_dynamics_derivatives(const VecXd &x, const VecXd &u,
 															MatXd &fx, MatXd &fu)
 {
+  fx.resize(n,n);
+  fu.resize(n,m);
+
   VecXd plus, minus;
   for (int i=0; i<n; i++)
   {
@@ -51,6 +54,9 @@ void iLQR::get_dynamics_derivatives(const VecXd &x, const VecXd &u,
 void iLQR::get_cost_derivatives(const VecXd &x, const VecXd &u,
 															VecXd &cx, VecXd &cu)
 {
+  cx.resize(n,1);
+  cu.resize(m,1);
+
   VecXd plus, minus;
   for (int i=0; i<n; i++)
   {
@@ -71,7 +77,12 @@ void iLQR::get_cost_derivatives(const VecXd &x, const VecXd &u,
 void iLQR::get_cost_2nd_derivatives(const VecXd &x, const VecXd &u,
 															MatXd &cxx, MatXd &cxu, MatXd &cuu)
 {
+  cxx.resize(n,n);
+  cxu.resize(n,m);
+  cuu.resize(m,m);
+
   //TODO remove repetition
+
   VecXd pp, pm, mp, mm; //plus-plus, plus-minus, ....
   //cxx
   for (int i=0; i<n; i++){

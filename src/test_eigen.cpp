@@ -2,6 +2,7 @@
 #include <eigen/Eigen/Dense>
 #include <math.h>
 #include <vector>
+#include "../include/standardIncludes.h"
 
 
 double x_squared(double x){
@@ -40,14 +41,13 @@ MatXd finite_differences(VecXd &x,
   return J;
 }
 
-double pi = M_PI;
-
-
 int main()
 {
 
   VecXd x(4);
   x << 1, 2, 3, 4;
+
+  x = x.array() / 2;
 
   //Testing function pointers
   VecXd (*func)(const VecXd&);
@@ -56,5 +56,5 @@ int main()
   VecOfVecXd vector(3);
 
 
-  std::cout << finite_differences(x, func) << std::endl;
+  std::cout << x << std::endl;
 }

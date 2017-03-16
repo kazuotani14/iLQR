@@ -20,6 +20,7 @@ int main(){
 
 		car.u0 = u0;
 		car.init_traj(x0,u0);
+		car.generate_trajectory(x0, x_d, 50);
 }
 
 //   VecXd x(6);

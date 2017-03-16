@@ -15,7 +15,6 @@ Stuff to do (in approximate order)
 - step 2 in iLQR_core
 - step 3 in iLQR_core
 
-
 - integrate cost for change in control input
 - printing stuff in iLQR_main at every iteration
 - simple version in boxQP
@@ -27,13 +26,15 @@ Stuff to do (in approximate order)
 Later on:
 - fix all the messy stuff
 	- sort out public/private
-	- typedefs
+
 - make it faster
 	- vectorize for parallel line search
 	- see links in notes
 	- consts everywhere
 	- see what the ddp-generator guy did to optimize
+
 - refactor to completely separate iLQR class from Model class
 - make it reusable
-	- make skeleton for new Model class
+	- make skeleton for new Model class, for reference
+
 - add documentation
