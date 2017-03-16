@@ -1,5 +1,4 @@
-/build/CMakeFiles/
-/build/
+/build/CMakeFiles/**
 /build/CMakeFiles/3.7.2/CMakeCCompiler.cmake
 /build/CMakeFiles/3.7.2/CMakeCXXCompiler.cmake
 /build/CMakeFiles/3.7.2/CMakeDetermineCompilerABI_C.bin
