@@ -8,6 +8,14 @@
 #include <iostream>
 #include <math.h>
 
+typedef Eigen::VectorXd VecXd;
+typedef Eigen::MatrixXd MatXd;
+typedef std::vector<VecXd> VecOfVecXd;
+typedef std::vector<MatXd>  VecOfMatXd;
+
+//---------------------------------
+// Math helper functions
+//---------------------------------
 const double pi = M_PI;
 
 template<typename T>
@@ -70,9 +78,9 @@ inline double wrap_to_pi(double angle)
   return Mod(angle+pi, 2*pi) - pi;
 }
 
-/*
- * Eigen-specific helper functions
- */
+//---------------------------------
+// Eigen-specific helper functions
+//---------------------------------
 
 template <typename T>
 inline void print_vec(T vec){
@@ -82,20 +90,20 @@ inline void print_vec(T vec){
   std::cout << '\n';
 }
 
-inline Eigen::VectorXd elem_square(const Eigen::VectorXd &vec)
+inline VecXd elem_square(const VecXd &vec)
 {
   return vec.array().square().matrix();
 }
 
-inline Eigen::VectorXd elem_sqrt(const Eigen::VectorXd &vec)
+inline VecXd elem_sqrt(const VecXd &vec)
 {
   return vec.array().sqrt().matrix();
 }
 
-inline Eigen::VectorXd sabs(const Eigen::VectorXd &vec, const Eigen::VectorXd &p)
+inline VecXd sabs(const VecXd &vec, const VecXd &p)
 {
   //Differentiable "soft" absolute value function
-  Eigen::VectorXd sum = elem_sqrt(elem_square(vec)+elem_square(p));
+  VecXd sum = elem_sqrt(elem_square(vec)+elem_square(p));
   return sum - p;
 }
 

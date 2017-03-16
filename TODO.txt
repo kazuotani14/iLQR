@@ -6,13 +6,16 @@ Best way to do this - refactor into a standalone function during testing?
 For now, I am skipping the vectorization/parallelization of the forward pass so that
 we can get this up and running quickly.
 
+Figure out where to put past inputs.
+
 Stuff to do (in approximate order)
-- iLQR::dynamics_derivatives, compute_derivaties (from car_dyn_cst in matlab)
 - iLQR::init_traj (check pending)
-- step 2 in iLQR_main
-- step 3 in iLQR_main
 - iLQR::forward_pass
 - iLQR::backward_pass
+- step 2 in iLQR_core
+- step 3 in iLQR_core
+
+
 - integrate cost for change in control input
 - printing stuff in iLQR_main at every iteration
 - simple version in boxQP
@@ -24,6 +27,7 @@ Stuff to do (in approximate order)
 Later on:
 - fix all the messy stuff
 	- sort out public/private
+	- typedefs
 - make it faster
 	- vectorize for parallel line search
 	- see links in notes

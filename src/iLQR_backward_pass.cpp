@@ -1,11 +1,11 @@
 #include "iLQR2.h"
 
-int iLQR::back_pass(Eigen::Matrix2d &cx, Eigen::Matrix2d &cu, Eigen::MatrixXd &cxx,
-										Eigen::MatrixXd &cxu, Eigen::MatrixXd &cuu, Eigen::MatrixXd &fx,
-										Eigen::MatrixXd &fu, Eigen::Matrix2d &u,
+int iLQR::back_pass(Eigen::Matrix2d &cx, Eigen::Matrix2d &cu, MatXd &cxx,
+										MatXd &cxu, MatXd &cuu, MatXd &fx,
+										MatXd &fu, Eigen::Matrix2d &u,
 
-										Eigen::Matrix2d &Vx, Eigen::MatrixXd &Vxx, Eigen::Matrix2d &l,
-										Eigen::MatrixXd &L, Eigen::Vector2d &dV)
+										Eigen::Matrix2d &Vx, MatXd &Vxx, Eigen::Matrix2d &l,
+										MatXd &L, Eigen::Vector2d &dV)
 {
 /*
 	INPUTS

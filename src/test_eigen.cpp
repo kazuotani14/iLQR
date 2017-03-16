@@ -1,16 +1,43 @@
 #include <iostream>
 #include <eigen/Eigen/Dense>
 #include <math.h>
+#include <vector>
 
-using namespace Eigen;
 
-template<typename T>
-double first_value(T &mat){
-  return mat(0);
+double x_squared(double x){
+	double y = x*x;
+  return y;
 }
 
-VectorXd first_val_eigen(VectorXd &mat){
-  return mat;
+double finite_differences(double x0, double(*foo)(double))
+{
+  double epsilon = 0.00001;
+  double dx = (foo(x0+epsilon)-foo(x0-epsilon)) / (2*epsilon);
+  return dx;
+}
+
+VecXd vec_squared(const VecXd &x)
+{
+  VecXd squared = x.array().square().matrix();
+  return squared;
+}
+
+MatXd finite_differences(VecXd &x,
+                                    VecXd (*foo)(const VecXd&))
+{
+  double eps = 0.0001;
+  int n = x.size();
+  MatXd J(n,n);
+
+  for (int i=0; i<n; i++)
+  {
+    VecXd plus = x;
+    VecXd minus = x;
+    plus(i) += eps;
+    minus(i) -= eps;
+    J.col(i) = (foo(plus)-foo(minus)) / (2*eps);
+  }
+  return J;
 }
 
 double pi = M_PI;
@@ -19,23 +46,15 @@ double pi = M_PI;
 int main()
 {
 
-  // double alpha_F, alpha_R;
+  VecXd x(4);
+  x << 1, 2, 3, 4;
 
-  MatrixXd m(2,2);
-  m(0,0) = 3;
-  m(1,0) = 2.5;
-  m(0,1) = -1;
-  m(1,1) = m(1,0) + m(0,1);
+  //Testing function pointers
+  VecXd (*func)(const VecXd&);
+  func = &vec_squared;
 
-  // VectorXd v;
-  // v << 1, 2, 3, 4, 5;
-  //v.head(3), v.tail(2)
-  //std::abs(1.3)
+  VecOfVecXd vector(3);
 
-  Eigen::Vector2d cu(1, 1); //control cost
-  cu *= pow(10,-3);
-  Eigen::Vector2d cdu(0.01, 1);  //change in control cost
-  cdu *= pow(10,-1);
 
-  std::cout << cu << std::endl;
+  std::cout << finite_differences(x, func) << std::endl;
 }

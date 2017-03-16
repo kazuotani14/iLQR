@@ -1,21 +1,21 @@
 #include "iLQR2.h"
 
-void iLQR::forward_pass(Eigen::VectorXd &x0, std::vector<Eigen::Vector2d> &u,
-									std::vector<Eigen::VectorXd> &xnew, std::vector<Eigen::Vector2d> &unew, double &new_cost)
+void iLQR::forward_pass(VecXd &x0, VecOfVecXd &u,
+									VecOfVecXd &xnew, VecOfVecXd &unew, double &new_cost)
 {
 	// Initialize zero vectors;
-	std::vector<Eigen::VectorXd> x;
-	std::vector<Eigen::MatrixXd> L;
-	std::vector<Eigen::Vector2d> du;
+	VecOfVecXd x;
+	VecOfMatXd L;
+	VecOfVecXd du;
 	double alpha = 9999; //just so bugs are easier to identify
 
 	forward_pass(x0, u, xnew, unew, new_cost, x, L, du, alpha);
 }
 
-void iLQR::forward_pass(Eigen::VectorXd &x0, std::vector<Eigen::Vector2d> &u,
-									std::vector<Eigen::VectorXd> &xnew, std::vector<Eigen::Vector2d> &unew, double &new_cost,
-									std::vector<Eigen::VectorXd> &x, std::vector<Eigen::MatrixXd> &L,
-									std::vector<Eigen::Vector2d> &du, double &alpha)
+void iLQR::forward_pass(VecXd &x0, VecOfVecXd &u,
+									VecOfVecXd &xnew, VecOfVecXd &unew, double &new_cost,
+									VecOfVecXd &x, VecOfMatXd &L,
+									VecOfVecXd &du, double &alpha)
 {
 /*
 INPUTS
@@ -27,9 +27,9 @@ OUTPUTS
 
 	double total_cost = 0;
 
-	Eigen::VectorXd x_curr = x0;
-	Eigen::VectorXd x1;
-	Eigen::Vector2d u_curr;
+	VecXd x_curr = x0;
+	VecXd x1;
+	VecXd u_curr;
 	xnew[0] = x0;
 
 	for (int t=0; t<T; t++) 	//at each timestep
@@ -43,7 +43,7 @@ OUTPUTS
 
 		if (L.size()>0 && x.size()>0)
 		{
-			Eigen::VectorXd dx;
+			VecXd dx;
 			dx = xnew[t] - x[t];
 			u_curr += L[t]*dx; //apply LQR control gains
 		}

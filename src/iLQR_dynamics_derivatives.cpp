@@ -1,15 +1,10 @@
 #include "iLQR2.h"
 
-// void iLQR::finite_difference(x, u, matrix, function)
-// {
-// 	// need function pointer
-// 	// or just make separate functions for finite differencing different things, like TGlad did
-// }
-
+#define eps 0.0001
 
 // This has a weird condition based on number of outputs in MATLAB code
 // Split into two functions
-double iLQR::get_dynamics_and_cost(const Eigen::VectorXd &x, const Eigen::VectorXd u, Eigen::VectorXd &x1)
+double iLQR::get_dynamics_and_cost(const VecXd &x, const VecXd u, VecXd &x1)
 {
 	// returns cost, modifies dx
 		x1 = dynamics(x,u);
@@ -17,37 +12,98 @@ double iLQR::get_dynamics_and_cost(const Eigen::VectorXd &x, const Eigen::Vector
 		return c;
 }
 
-// // //TODO
-// double iLQR::compute_derivatives(const Eigen::VectorXd &x, const Eigen::VectorXd &u, const Eigen::MatrixXD &fx,
-// 												 const Eigen::MatrixXD &fu, const Eigen::Matrix2D &cx, constEigen::Matrix2D &cu,
-// 												 const Eigen::MatrixXD &cxx, const Eigen::MatrixXD &cxu, const Eigen::MatrixXD &cuu)
-// {
-// 	// % state and control indices
-// 	// ix = 1:10;
-// 	// iu = 11:12;
-// 	//
-// 	// % dynamics first derivatives
-// 	// % J - Jacobian, derivative of states wrt states and control inputs
-// 	// % n x (n+m) x T , where n=dim(x), m=dim(u), T=horizon
-// 	// xu_dyn  = @(xu) car_dynamics(xu(ix,:),xu(iu,:));
-// 	// J       = finite_difference(xu_dyn, [x; u]);
-// 	// fx      = J(:,ix,:);
-// 	// fu      = J(:,iu,:);
-// 	//
-// 	// % cost first derivatives
-// 	// xu_cost = @(xu) car_cost(xu(ix,:),xu(iu,:));
-// 	// J       = squeeze(finite_difference(xu_cost, [x; u]));
-// 	// cx      = J(ix,:);
-// 	// cu      = J(iu,:);
-// 	//
-// 	// % cost second derivatives
-// 	// xu_Jcst = @(xu) squeeze(finite_difference(xu_cost, xu));
-// 	// JJ      = finite_difference(xu_Jcst, [x; u]);
-// 	// JJ      = 0.5*(JJ + permute(JJ,[2 1 3])); %symmetrize
-// 	// cxx     = JJ(ix,ix,:);
-// 	// cxu     = JJ(ix,iu,:);
-// 	// cuu     = JJ(iu,iu,:);
-//
-// }
+void iLQR::compute_derivatives(const VecOfVecXd &x, const VecOfVecXd &u, VecOfMatXd &fx,
+												 VecOfMatXd &fu, VecOfVecXd &cx, VecOfVecXd &cu,
+												 VecOfMatXd &cxx, VecOfMatXd &cxu, VecOfMatXd &cuu)
+{
+  for (int t=0; t<T; t++)
+  {
+    get_dynamics_derivatives(x[t], u[t], fx[t], fu[t]);
+    get_cost_derivatives(x[t], u[t], cx[t], cu[t]);
+    get_cost_2nd_derivatives(x[t], u[t], cxx[t], cxu[t], cuu[t]);
+  }
+}
 
-// void get_dynamics_derivatives
+
+// -----------------
+// Derivative computation
+
+void iLQR::get_dynamics_derivatives(const VecXd &x, const VecXd &u,
+															MatXd &fx, MatXd &fu)
+{
+  VecXd plus, minus;
+  for (int i=0; i<n; i++)
+  {
+    plus = minus = x;
+    plus(i) += eps;
+    minus(i) += eps;
+    fx.col(i) = (dynamics(plus, u)-dynamics(minus, u)) / (2*eps);
+  }
+
+  for (int i=0; i<m; i++){
+    plus = minus = u;
+    plus(i) += eps;
+    minus(i) += eps;
+    fu.col(i) = (dynamics(x, plus)-dynamics(x, minus)) / (2*eps);
+  }
+}
+
+void iLQR::get_cost_derivatives(const VecXd &x, const VecXd &u,
+															VecXd &cx, VecXd &cu)
+{
+  VecXd plus, minus;
+  for (int i=0; i<n; i++)
+  {
+    plus = minus = x;
+    plus(i) += eps;
+    minus(i) += eps;
+    cx(i) = (cost(plus, u)-cost(minus, u)) / (2*eps);
+  }
+
+  for (int i=0; i<m; i++){
+    plus = minus = u;
+    plus(i) += eps;
+    minus(i) += eps;
+    cu(i) = (cost(x, plus)-cost(x, minus)) / (2*eps);
+  }
+}
+
+void iLQR::get_cost_2nd_derivatives(const VecXd &x, const VecXd &u,
+															MatXd &cxx, MatXd &cxu, MatXd &cuu)
+{
+  //TODO remove repetition
+  VecXd pp, pm, mp, mm; //plus-plus, plus-minus, ....
+  //cxx
+  for (int i=0; i<n; i++){
+    for (int j=0; j<n; j++){
+      pp = pm = mp = mm = x;
+      pp(i) += eps; pp(j) += eps;
+      pm(i) += eps; pm(j) += eps;
+      mp(i) -= eps; mp(j) -= eps;
+      mm(i) -= eps; mm(j) -= eps;
+      cxx(i,j) = (cost(mm, u) + cost(pp, u) + cost(pm, u) + cost(mp, u)) / (4*sqr(eps));
+    }
+  }
+  //cxu
+  for (int i=0; i<n; i++){
+    for (int j=0; j<m; j++){
+      pp = pm = mp = mm = x;
+      pp(i) += eps; pp(j) += eps;
+      pm(i) += eps; pm(j) += eps;
+      mp(i) -= eps; mp(j) -= eps;
+      mm(i) -= eps; mm(j) -= eps;
+      cxu(i,j) = (cost(mm, u) + cost(pp, u) + cost(pm, u) + cost(mp, u)) / (4*sqr(eps));
+    }
+  }
+  //cuu
+  for (int i=0; i<m; i++){
+    for (int j=0; j<m; j++){
+      pp = pm = mp = mm = x;
+      pp(i) += eps; pp(j) += eps;
+      pm(i) += eps; pm(j) += eps;
+      mp(i) -= eps; mp(j) -= eps;
+      mm(i) -= eps; mm(j) -= eps;
+      cuu(i,j) = (cost(mm, u) + cost(pp, u) + cost(pm, u) + cost(mp, u)) / (4*sqr(eps));
+    }
+  }
+} //get_cost_2nd_derivatives

@@ -2,7 +2,7 @@
 
 // TODO vectorize so we can do parallel line search. for now, do sequential
 
-double LocoCar::cost(const Eigen::VectorXd &x, const Eigen::VectorXd &u)
+double LocoCar::cost(const VecXd &x, const VecXd &u) 
 {
   // Input: n=8 state vector(s). 6 states, 2 precalculated du
   // columns of x and u will be each hypothesis
@@ -58,13 +58,13 @@ double LocoCar::cost(const Eigen::VectorXd &x, const Eigen::VectorXd &u)
   return total_cost;
 }; //cost
 
-double LocoCar::final_cost(const Eigen::VectorXd &x)
+double LocoCar::final_cost(const VecXd &x)
 {
   // Weights
-  Eigen::VectorXd cf(6); cf << 10, 10, 1, 0.1, 0.1, 0.1; // final cost
-  Eigen::VectorXd pf(6); pf << 0.01, 0.01, 0.1, 0.1, 0.1, 0.1; //smoothness scales
+  VecXd cf(6); cf << 10, 10, 1, 0.1, 0.1, 0.1; // final cost
+  VecXd pf(6); pf << 0.01, 0.01, 0.1, 0.1, 0.1, 0.1; //smoothness scales
 
-  Eigen::VectorXd dist = x.segment<6>(0) - x_d;
+  VecXd dist = x.segment<6>(0) - x_d;
 
   double final_cost = cf.dot((sabs(dist,pf)) + elem_square(sabs(dist,pf)));
 

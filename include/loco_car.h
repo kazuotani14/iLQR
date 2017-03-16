@@ -14,9 +14,8 @@ class LocoCar : public iLQR
   const double a;          // CoG to front axle
   const double G_front;   // calculated load or specify front rear load directly
   const double G_rear;
-
-  const double C_x;       // longitude stiffness
-  const double C_alpha;   //laternal stiffness
+  const double C_x;       // longitudinal stiffness
+  const double C_alpha;   //lateral stiffness
   const double Iz;     // rotational inertia
   const double mu;      //5.2/G_rear
   const double mu_spin;  //4.3/G_rear
@@ -34,11 +33,11 @@ public:
              Iz(0.045), mu(0.75), mu_spin(0.2), a(0.11372), G_front(12.852550506),
              G_rear(10.200949494) { }
 
-  Eigen::VectorXd dynamics(const Eigen::VectorXd &x, const Eigen::Vector2d &u); //dynamics
+  VecXd dynamics(const VecXd &x, const VecXd &u) ; //dynamics
 
-  double cost(const Eigen::VectorXd &x, const Eigen::VectorXd &u);
+  double cost(const VecXd &x, const VecXd &u) ;
 
-  double final_cost(const Eigen::VectorXd &x);
+  double final_cost(const VecXd &x) ;
 
 };
 
