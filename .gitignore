@@ -44,3 +44,8 @@
 /build/test_dynamics
 /build/CMakeFiles/Progress/3
 /build/CMakeFiles/Progress/count.txt
+/build/CMakeFiles/run_iLQR.dir/src/iLQR_core.cpp.o
+/build/CMakeFiles/run_iLQR.dir/src/iLQR_dynamics_derivatives.cpp.o
+/build/CMakeFiles/run_iLQR.dir/src/iLQR_forward_pass.cpp.o
+/build/CMakeFiles/run_iLQR.dir/src/loco_car_costs.cpp.o
+/build/CMakeFiles/run_iLQR.dir/src/loco_car_dynamics.cpp.o
