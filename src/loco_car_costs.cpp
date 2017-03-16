@@ -7,8 +7,8 @@ double LocoCar::cost(const VecXd &x, const VecXd &u)
   // Input: n=8 state vector(s). 6 states, 2 precalculated du
   // columns of x and u will be each hypothesis
   //Coefficients/weights, TODO same initializations
-  Eigen::Vector2d cu(pow(10,-4), pow(10,-4)); //control cost
-  Eigen::Vector2d cdu(pow(10,-3), pow(10,-1)); cdu *= 50;  //change in control cost
+  Vec2d cu(pow(10,-4), pow(10,-4)); //control cost
+  Vec2d cdu(pow(10,-3), pow(10,-1)); cdu *= 50;  //change in control cost
 
   Eigen::Vector3d cx(0.5, 0.5, 0.4); //running cost for pose
   Eigen::Vector3d cdx(0.005, 0.005, 0.002); // running cost for velocities
@@ -36,9 +36,9 @@ double LocoCar::cost(const VecXd &x, const VecXd &u)
   double lobs = 0;
   if (!(obs(0) == 9999)) // 9999 is arbitrary number to mark no obstace TODO find better way
   {
-    Eigen::Vector2d pos = x.segment<2>(0);
-    Eigen::Vector2d vel = x.segment<2>(3);
-    Eigen::Vector2d vec2obs = obs - pos;
+    Vec2d pos = x.segment<2>(0);
+    Vec2d vel = x.segment<2>(3);
+    Vec2d vec2obs = obs - pos;
     double dist2obs = vec2obs.norm();
     double velnorm = vel.norm();
 

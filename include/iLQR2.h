@@ -35,13 +35,17 @@ class iLQR
 
   // Helper functions will modify passed-in variables instead of returning values,
   //  because most of them need to return multiple values.
-  void forward_pass(VecXd &x0, VecOfVecXd &u,
+  void forward_pass(const VecXd &x0, const VecOfVecXd &u,
   									VecOfVecXd &xnew, VecOfVecXd &unew, double &new_cost);
 
-  void forward_pass(VecXd &x0, VecOfVecXd &u,
+  void forward_pass(const VecXd &x0, const VecOfVecXd &u,
   									VecOfVecXd &xnew, VecOfVecXd &unew, double &new_cost,
-  									VecOfVecXd &x, VecOfMatXd &L,
-  									VecOfVecXd &du, double &alpha);
+  									const VecOfVecXd &x, const VecOfMatXd &L,
+  									const VecOfVecXd &du, const double &alpha);
+
+  int backward_pass(const VecOfVecXd &cx, const VecOfVecXd &cu, const VecOfMatXd &cxx, const VecOfMatXd &cxu,
+  									const VecOfMatXd &cuu, const VecOfMatXd &fx, const VecOfMatXd &fu, const VecOfVecXd &u,
+  									VecOfVecXd Vx, VecOfMatXd Vxx, VecOfVecXd k, VecOfMatXd K, Vec2d dV);
 
   // int back_pass(cx,cu,cxx,cxu,cuu,fx,fu,fxx,fxu,fuu,lambda,regType,lims,u); //TODO
   // void boxQP(H,g,lower,upper,x0);

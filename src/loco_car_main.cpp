@@ -13,7 +13,7 @@ int main(){
 		car.x_d = x_d;
 
 		VecOfVecXd u0;
-		Eigen::Vector2d u_init(1, 0.3);
+		Vec2d u_init(1, 0.3);
 		for (int i=0; i<50; i++){
 			u0.push_back(u_init);
 		}
@@ -25,7 +25,7 @@ int main(){
 
 //   VecXd x(6);
 //   x << 1,2,3,1,2,3;
-//   Eigen::Vector2d u(1,1);
+//   Vec2d u(1,1);
 //   VecXd dx(6);
 //   dx = loco.dynamics(x,u);
 //   print_vec(dx);

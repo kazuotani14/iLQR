@@ -20,17 +20,15 @@ void iLQR::generate_trajectory(const VecXd &x_0, const VecXd &x_d, const int tra
 	// TODO Check inputs
 
 	// TODO Make sure trajectory (xs, us) is initialized, copy to x and u
-	MatXd x;	//nxT
-	MatXd u; //2xT // TODO change these to vectors
+	VecOfVecXd x;	//nxT
+	VecOfVecXd u; //2xT // TODO change these to vectors
 
 	// Initialize all vectors, matrices we'll be using
-	VecOfMatXd L; //2xnxT
-	VecOfVecXd l(n); //2xT
 	VecOfMatXd du(T); //2*T double
 	VecOfMatXd fx(T+1); //nxnx(T+1)
 	VecOfMatXd fu(T+1); //nx2x(T+1)
 	VecOfVecXd cx(T+1); //nx(T+1)
-	std::vector<VecXd >cu(T+1); //2x(T+1)
+	VecOfVecXd cu(T+1); //2x(T+1)
 	VecOfMatXd cxx(T+1); //nxnx(T+1)
 	VecOfMatXd cxu(T+1); //nx2x(T+1)
 	VecOfMatXd cuu(T+1); //2x2x(T+1), nxnx(T+1)
@@ -38,7 +36,9 @@ void iLQR::generate_trajectory(const VecXd &x_0, const VecXd &x_d, const int tra
 
 	VecOfVecXd Vx; //nx(T+1)
 	VecOfMatXd Vxx; //nxnx(T+1)
-	Eigen::Vector2d dV; //2x1
+	VecOfMatXd L(T); //2xnxT
+	VecOfVecXd l(T); //2xT
+	Vec2d dV; //2x1
 
 	// constants, timers, counters
 	bool flgChange = true;
@@ -56,18 +56,20 @@ void iLQR::generate_trajectory(const VecXd &x_0, const VecXd &x_d, const int tra
 		//--------------------------------------------------------------------------
 		// STEP 1: Differentiate dynamics and cost along new trajectory
 		if (flgChange){
-			compute_derivatives(xs,us,  fx,fu,cx,cu,cxx,cxu,cuu);
+			compute_derivatives(xs,us, fx,fu,cx,cu,cxx,cxu,cuu);
 			flgChange = 0;
 		}
 
 		//--------------------------------------------------------------------------
 		// STEP 2: Backward pass, compute optimal control law and cost-to-go
-		// bool backPassDone = false;
-		// while (!backPassDone)
-		// {
-		// 	// update Vx, Vxx, l, L, dV with back_pass
-		// 	int diverge = backward_pass(cx,cu,cxx,cxu,cuu,fx,fu,fxx,fxu,fuu,u); // TODO
-		// 
+		bool backPassDone = false;
+		while (!backPassDone)
+		{
+	 		// update Vx, Vxx, l, L, dV with back_pass
+			// TODO
+			int diverge = backward_pass(cx,cu,cxx,cxu,cuu,fx,fu,u, Vx, Vxx, l, L, dV);
+
+		//
 		// 	if (diverge!=0)
 		// 	{
 		// 		std::cout << "Cholesky failed at timestep " << diverge << ".\n";
@@ -77,8 +79,8 @@ void iLQR::generate_trajectory(const VecXd &x_0, const VecXd &x_d, const int tra
 		// 				break;
 		// 		continue;
 		// 	}
-		// 	backPassDone = true;
-		// }
+			backPassDone = true;
+		}
 		// TODO check for termination due to small gradient
 
 		//--------------------------------------------------------------------------

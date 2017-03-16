@@ -1,9 +1,9 @@
 #include "iLQR2.h"
 
-void iLQR::forward_pass(VecXd &x0, VecOfVecXd &u,
-									VecOfVecXd &xnew, VecOfVecXd &unew, double &new_cost)
+void iLQR::forward_pass(const VecXd &x0, const VecOfVecXd &u,
+												VecOfVecXd &xnew, VecOfVecXd &unew, double &new_cost)
 {
-	// Initialize zero vectors;
+	// Initialize dummy vectors;
 	VecOfVecXd x;
 	VecOfMatXd L;
 	VecOfVecXd du;
@@ -12,18 +12,11 @@ void iLQR::forward_pass(VecXd &x0, VecOfVecXd &u,
 	forward_pass(x0, u, xnew, unew, new_cost, x, L, du, alpha);
 }
 
-void iLQR::forward_pass(VecXd &x0, VecOfVecXd &u,
+void iLQR::forward_pass(const VecXd &x0, const VecOfVecXd &u,
 									VecOfVecXd &xnew, VecOfVecXd &unew, double &new_cost,
-									VecOfVecXd &x, VecOfMatXd &L,
-									VecOfVecXd &du, double &alpha)
+									const VecOfVecXd &x, const VecOfMatXd &L,
+									const VecOfVecXd &du, const double &alpha)
 {
-/*
-INPUTS
- x0: nx1          u: 2xT            L: 2xnxT          x: nxT
- du: 2*T 	alpha: 1x1 or 11x1
-OUTPUTS
- xnew, unew, costnew
-*/
 
 	double total_cost = 0;
 
@@ -60,4 +53,4 @@ OUTPUTS
 	}
 
 	new_cost = total_cost;
-} //forward_pass
+}

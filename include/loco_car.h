@@ -20,14 +20,14 @@ class LocoCar : public iLQR
   const double mu;      //5.2/G_rear
   const double mu_spin;  //4.3/G_rear
 
-  Eigen::Vector2d tire_dyn(double Ux, double Ux_cmd, double mu, double mu_slide,
+  Vec2d tire_dyn(double Ux, double Ux_cmd, double mu, double mu_slide,
                     double Fz, double C_x, double C_alpha, double alpha);
 
   // void finite_difference( )
 
 public:
 
-  Eigen::Vector2d obs; //position of obstacle in map frame. set obs(0) to 9999 when it doesn't exist
+  Vec2d obs; //position of obstacle in map frame. set obs(0) to 9999 when it doesn't exist
 
   LocoCar(): m(2.35), g(9.81), L(0.257), b(0.14328), C_x(50), C_alpha(45),
              Iz(0.045), mu(0.75), mu_spin(0.2), a(0.11372), G_front(12.852550506),

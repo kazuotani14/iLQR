@@ -10,6 +10,7 @@
 
 typedef Eigen::VectorXd VecXd;
 typedef Eigen::MatrixXd MatXd;
+typedef Eigen::Vector2d Vec2d;
 typedef std::vector<VecXd> VecOfVecXd;
 typedef std::vector<MatXd>  VecOfMatXd;
 

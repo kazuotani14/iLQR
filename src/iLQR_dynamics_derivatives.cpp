@@ -31,6 +31,7 @@ void iLQR::compute_derivatives(const VecOfVecXd &x, const VecOfVecXd &u, VecOfMa
 void iLQR::get_dynamics_derivatives(const VecXd &x, const VecXd &u,
 															MatXd &fx, MatXd &fu)
 {
+  // TODO put these somewhere else? only needs to be done once
   fx.resize(n,n);
   fu.resize(n,m);
 
