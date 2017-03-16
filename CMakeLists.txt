@@ -7,8 +7,11 @@ file (GLOB SOURCES "src/*.cpp")
 
 # find_package(Eigen REQUIRED)
 
-add_executable(run_iLQR src/main_loco.cpp
-												)
+add_executable(run_iLQR src/loco_car_main.cpp
+												src/loco_car_dynamics.cpp
+												src/loco_car_costs.cpp
+												src/loco_car_main.cpp
+												src/iLQR_dynamics_derivatives.cpp)
 
 #add_executable(run_loco src/loco_car_dynamics.cpp
 #												src/loco_car_costs.cpp

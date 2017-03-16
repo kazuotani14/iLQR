@@ -2,7 +2,7 @@
 #define _LOCO_CAR_H_
 
 #include "standardIncludes.h"
-#include "iLQR.h"
+#include "iLQR2.h"
 
 class LocoCar : public iLQR
 {
@@ -24,7 +24,7 @@ class LocoCar : public iLQR
   Eigen::Vector2d tire_dyn(double Ux, double Ux_cmd, double mu, double mu_slide,
                     double Fz, double C_x, double C_alpha, double alpha);
 
-  void finite_difference( )
+  // void finite_difference( )
 
 public:
 
