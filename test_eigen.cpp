@@ -60,24 +60,28 @@ MatXd finite_differences(VecXd &x,
 int main()
 {
 
+	VecXd::Zero(3) test;
+	std::cout << test;
+
+
   // for (int i=0; i<5; i++){
   //   std::cout << Vec2d::Random() << "\n\n";
   // }
-  int a,b;
-  a = b = 1;
-  a = b+= 5;
-  std::cout << a << ' ' << b << '\n';
-
-  Eigen::Matrix2d y;
-  y << 1, 2, 3, 4;
-
-  VecXd x(4);
-  x << 1, 2, 3, 4;
-
-  Vec2d ind;
-  ind << 0, 1;
-
-  x = x.array() / 2;
+  // int a,b;
+  // a = b = 1;
+  // a = b+= 5;
+  // std::cout << a << ' ' << b << '\n';
+	//
+  // Eigen::Matrix2d y;
+  // y << 1, 2, 3, 4;
+	//
+  // VecXd x(4);
+  // x << 1, 2, 3, 4;
+	//
+  // Vec2d ind;
+  // ind << 0, 1;
+	//
+  // x = x.array() / 2;
 
   //Testing function pointers
   VecXd (*func)(const VecXd&);

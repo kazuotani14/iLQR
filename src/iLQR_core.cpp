@@ -42,8 +42,8 @@ void iLQR::generate_trajectory(const VecXd &x_0, const VecXd &x_d, const int tra
 	}
 
 	// TODO Make sure trajectory (xs, us) is initialized, copy to x and u
-	VecOfVecXd x;	//nxT
-	VecOfVecXd u; //2xT // TODO change these to vectors
+	VecOfVecXd x = xs;	//nxT
+	VecOfVecXd u = us; //2xT // TODO change these to vectors
 
 	// Initialize all vectors, matrices we'll be using
 	MatXd du(2,T); 	//2*T double

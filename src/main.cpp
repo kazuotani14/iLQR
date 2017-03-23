@@ -52,8 +52,3 @@ int main(){
 // x << 1, 2, 3, 1, 2, 3, 0.1, 0.5;
 // VecXd u(2);
 // u << 1, 0.5;
-
-
-// VecXd x1;
-// double c = car.get_nextstate_and_cost(x, u, x1);
-// std::cout << x1 << '\n' << "cost: " << c << '\n';

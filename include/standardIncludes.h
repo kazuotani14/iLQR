@@ -37,6 +37,7 @@ inline double sabs(double x, double y)
   return sqrt(sqr(x)+sqr(y))-y;
 }
 
+//---------------------------------
 // Floating-point modulo
 // The result (the remainder) has same sign as the divisor.
 // Similar to matlab's mod(); Not similar to fmod() -   Mod(-3,4)= 1   fmod(-3,4)= -3

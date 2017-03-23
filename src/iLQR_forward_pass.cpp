@@ -27,7 +27,7 @@ void iLQR::forward_pass(const VecXd &x0, const VecOfVecXd &u,
 	{
 		u_curr = u[t];
 
-		if (L.size()>0 && x.size()>0)
+		if (x.size()>0 && L.size()>0)
 		{
 		VecXd dx;
 			dx = xnew[t] - x[t];
@@ -37,8 +37,8 @@ void iLQR::forward_pass(const VecXd &x0, const VecOfVecXd &u,
 		//clamp to min and max values in control_limits
 		unew[t] = clamp_to_limits(u_curr);
 
-		double cost = get_nextstate_and_cost(x_curr, u_curr, x1); //step forward in time
-		total_cost += cost;
+		x1 = integrate_dynamics(x_curr,u_curr); //step forward in time
+		total_cost += cost(x_curr,u_curr);
 
 		xnew[t+1] = x1;
 		x_curr = x1;

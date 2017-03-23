@@ -4,9 +4,12 @@ Eigen doesn't support 3D matrices...
 
 Figure out where to put past inputs.
 
-
 Stuff to do (in approximate order)
 
+=======
+-------------
+TODO
+>>>>>>> b889efe... slightly organized code
 - step 2~4 in iLQR_core
 	- check for termination due to small gradient
 
@@ -23,33 +26,41 @@ Check inputs/outputs individually:
 - step 3 in iLQR_core
 
 - integrate cost for change in control input
-- printing stuff in iLQR_main at every iteration
+
+
 - write final control sequence and states to text file
 - test whole thing and see if output looks reasonable - plot in matlab
 
+-------------
+FASTER
+- optimize in this order: steps, 1, 2, 3
+
+- calculate_derivatives
+	- store auxiliary variables
+	- change incrementing method?
+
+- backward_pass
+
+
+- make everything matrices instead of vectors of matrices?
+- see links in notes
+- consts everywhere
+- vectorize for parallel line search
+
+-----------
 Later on:
 - fix all the messy stuff
 	- sort out public/private in classes
-	- figure out how to have less arguments for methods - pass structs
 	- extract methods into smaller methods, especially in fw, bw, boxQP
 
 
-
-- make it faster
-	- make everything matrices instead of vectors of matrices
-	- see what the ddp-generator guy did to optimize
-		- only calculate upper triangle in symmetric matrices
-	- see links in notes
-	- consts everywhere
-	- vectorize for parallel line search
-
-
-- make ir more readable
+- make it more readable
 	- see google cpp style guide
 	- refactor to completely separate iLQR class from Model class
 		- make sure everything in iLQR is dimension-agnostic
+		- there are currently some hacks
 	- make it reusable
 		- make skeleton for new Model class, for reference
 
 - add documentation
-- eigen helper functions are all inline right now to prevent duplicate symbol error
+- eigen helper functions are all inline right now to prevent duplicate symbol error - fix this
