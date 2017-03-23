@@ -71,14 +71,11 @@ class iLQR
   void demoQP();
 
 public:
-  VecXd x_d; // target state
-  VecOfVecXd u0; //initial control sequence
   const double timeDelta; //dt for euler integration
+  VecXd x_d; // target state
 
-  double init_traj(VecXd &x_0, VecOfVecXd &u0);
-
-  iLQR(): tolFun(pow(10,-5)), tolGrad(pow(10,-5)), maxIter(30), lambda(1),
-                dlambda(1), lambdaFactor(1.6), lambdaMax(pow(10,10)), lambdaMin(pow(10,-7)),
+  iLQR(): tolFun(1e-6), tolGrad(1e-6), maxIter(30), lambda(1),
+                dlambda(1), lambdaFactor(1.6), lambdaMax(1e11), lambdaMin(1e-8),
                 zMin(0), n(6), m(2), T(50), timeDelta(0.05)
   {
  		Alpha.resize(11);
@@ -90,9 +87,8 @@ public:
                       -0.76, 0.68;  //min/max for steering
   }
 
-  // Generate and solve new trajectory optimization problem
-  void generate_trajectory(const VecXd &x_0, const VecXd &x_d, int trajectoryLength);
-
+  double init_traj(VecXd &x_0, VecOfVecXd &u0);
+  void generate_trajectory(const VecXd &x_0, int trajectoryLength);
 };
 
 #endif

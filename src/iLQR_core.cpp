@@ -33,17 +33,16 @@ VecOfVecXd iLQR::adjust_u(VecOfVecXd &u, VecOfVecXd &l, double alpha)
 // 	for (int i=0; i<l.size())
 // }
 
-void iLQR::generate_trajectory(const VecXd &x_0, const VecXd &x_d, const int trajectoryLength)
+void iLQR::generate_trajectory(const VecXd &x_0, const int trajectoryLength)
 {
-	// TODO Check inputs
-	if (us.size()==0){
+	// Check inputs
+	if (us.size()==0 || xs.size()==0){
 		std::cout << "Call init_traj first.\n";
 		return;
 	}
 
-	// TODO Make sure trajectory (xs, us) is initialized, copy to x and u
 	VecOfVecXd x = xs;	//nxT
-	VecOfVecXd u = us; //2xT // TODO change these to vectors
+	VecOfVecXd u = us; //2xT
 
 	// Initialize all vectors, matrices we'll be using
 	MatXd du(2,T); 	//2*T double
@@ -181,7 +180,7 @@ void iLQR::generate_trajectory(const VecXd &x_0, const VecXd &x_d, const int tra
 		// std::cout << "Finished step 3 : forward pass. \n";
 	  double t_3 = (std::clock() - start) / (double)(CLOCKS_PER_SEC);
 
-		std::cout << "Step times: " << t_1 << ' ' << t_2 << ' ' << t_3 << '\n';
+		// std::cout << "Step times: " << t_1 << ' ' << t_2 << ' ' << t_3 << '\n';
 	//--------------------------------------------------------------------------
 	// STEP 4: accept step (or not), print status
 	 	if (iter==0)
@@ -214,7 +213,6 @@ void iLQR::generate_trajectory(const VecXd &x_0, const VecXd &x_d, const int tra
 	 		dlambda  = std::max(dlambda * lambdaFactor, lambdaFactor);
 	 		lambda   = std::max(lambda * dlambda, lambdaMin);
 
-	 		// TODO print stuff
 			printf("%-12d\t%-12s\t%-12.3g\t%-12.3g\t%-12.3g\t%-12.1f\n",
                 iter,"NO STEP", dcost, expected, gnorm, log10(lambda));
 	 		// terminate?
@@ -228,6 +226,6 @@ void iLQR::generate_trajectory(const VecXd &x_0, const VecXd &x_d, const int tra
 	if (iter==maxIter)
 	 		std::cout << "\nEXIT: Maximum iterations reached.\n";
 	//
-	// TODO print final stuff
+	// TODO print/output final stuff
 
 } //generate_trajectory

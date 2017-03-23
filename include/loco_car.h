@@ -23,22 +23,17 @@ class LocoCar : public iLQR
   Vec2d tire_dyn(double Ux, double Ux_cmd, double mu, double mu_slide,
                     double Fz, double C_x, double C_alpha, double alpha);
 
-  VecXd dynamics(const VecXd &x, const VecXd &u); //dynamics
-
+  VecXd dynamics(const VecXd &x, const VecXd &u);
   double cost(const VecXd &x, const VecXd &u);
-
   double final_cost(const VecXd &x);
-
   VecXd integrate_dynamics(const VecXd &x, const VecXd u);
 
 public:
-
-  Vec2d obs; //position of obstacle in map frame. set obs(0) to 9999 when it doesn't exist
+  Vec2d obs; //position of obstacle in map frame. set obs to (0,0)
 
   LocoCar(): m(2.35), g(9.81), L(0.257), b(0.14328), C_x(65), C_alpha(55),
              Iz(0.025), mu(0.45), mu_spin(0.2), a(0.11372), G_front(12.852550506),
              G_rear(10.200949494) { }
-
 };
 
 #endif

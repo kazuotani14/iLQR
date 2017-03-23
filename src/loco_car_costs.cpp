@@ -8,7 +8,7 @@ double LocoCar::cost(const VecXd &x, const VecXd &u)
   // Input: n=8 state vector(s). 6 states, 2 precalculated du
   // columns of x and u will be each hypothesis
 
-  //Coefficients/weights, TODO same initializations
+  //Coefficients/weights
   Vec2d cu(1e-3, 1e-3); //control cost
   Vec2d cdu(1e-1, 1e-2); cdu *= 50;  //change in control cost
 
@@ -37,7 +37,7 @@ double LocoCar::cost(const VecXd &x, const VecXd &u)
 
   //obstacle avoidance cost
   double lobs = 0;
-  if (!(obs(0) == 9999)) // 9999 is arbitrary number to mark no obstace TODO find better way
+  if (obs.sum()>1e-7)
   {
     Vec2d pos = x.segment<2>(0);
     Vec2d vel = x.segment<2>(3);

@@ -21,13 +21,12 @@ int main(){
 			u0.push_back(u_init);
 			// u0.push_back(Vec2d::Random());
 		}
-		car.u0 = u0;
 
 		std::clock_t start;
 		start = std::clock();
 
 		car.init_traj(x0,u0);
-		car.generate_trajectory(x0, x_d, T);
+		car.generate_trajectory(x0, T);
 
 		double time_elapsed = (std::clock() - start) / (double)(CLOCKS_PER_SEC);
 		std::cout << "Took " << time_elapsed << " seconds.\n";

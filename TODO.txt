@@ -44,7 +44,6 @@ FASTER
 -----------
 Later on:
 - fix all the messy stuff
-	- sort out public/private in classes
 	- extract methods into smaller methods, especially in fw, bw, boxQP
 
 

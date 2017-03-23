@@ -46,7 +46,7 @@ int iLQR::backward_pass(const VecOfVecXd &cx, const VecOfVecXd &cu, const VecOfM
 	VecXd k_i(m);
 	MatXd K_i(m,n);
 
-	for (int i= T-1; i>=0; i--) // back up from end of trajectory TODO check start index
+	for (int i= T-1; i>=0; i--) // back up from end of trajectory 
 	{
 		Qx  = cx[i]      + fx[i].transpose() * Vx[i+1];
 		Qu  = cu[i]      + fu[i].transpose() * Vx[i+1];
