@@ -8,14 +8,15 @@
 #include <iostream>
 #include <math.h>
 #include <time.h>
+#define EIGEN_USE_NEW_STDVECTOR
 
 #define Eye2 Eigen::Matrix2d::Identity(2,2);
 
 typedef Eigen::Vector2d Vec2d;
 typedef Eigen::VectorXd VecXd;
 typedef Eigen::MatrixXd MatXd;
-typedef std::vector<VecXd> VecOfVecXd;
-typedef std::vector<MatXd>  VecOfMatXd;
+typedef std::vector<VecXd, Eigen::aligned_allocator<VecXd> > VecOfVecXd;
+typedef std::vector<MatXd, Eigen::aligned_allocator<MatXd> >  VecOfMatXd;
 
 //---------------------------------
 // Math helper functions

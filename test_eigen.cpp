@@ -4,6 +4,11 @@
 #include <vector>
 #include "include/standardIncludes.h"
 
+struct opt_deriv{
+	VecOfMatXd m;
+	VecOfVecXd v;
+};
+
 MatXd rows_w_ind(MatXd &mat, VecXd &indices)
 {
   MatXd submat;
@@ -60,8 +65,17 @@ MatXd finite_differences(VecXd &x,
 int main()
 {
 
-	VecXd::Zero(3) test;
-	std::cout << test;
+  opt_deriv d;
+  d.m.reserve(10);
+  d.v.reserve(10);
+  for (int i=0; i<5; i++){
+    d.m[i].resize(5,5);
+    d.v[i].resize(5);
+  }
+
+
+	// VecXd::Zero(3) test;
+	// std::cout << test;
 
 
   // for (int i=0; i<5; i++){

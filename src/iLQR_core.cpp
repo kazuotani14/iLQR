@@ -87,9 +87,7 @@ void iLQR::generate_trajectory(const VecXd &x_0, const VecXd &x_d, const int tra
 	std::cout << "\n=========== begin iLQG ===========\n";
 
 
-std::clock_t start;
-double time_elapsed;
-
+	std::clock_t start;
 	int iter;
 	for (iter=0; iter<maxIter; iter++)
 	{
@@ -106,8 +104,7 @@ double time_elapsed;
 			flgChange = 0;
 		}
 		// std::cout << "Finished step 1 : compute derivatives. \n";
-		time_elapsed = (std::clock() - start) / (double)(CLOCKS_PER_SEC);
-		std::cout << "Took 1st step " << time_elapsed << " seconds.\n";
+		double t_1 = (std::clock() - start) / (double)(CLOCKS_PER_SEC);
 
 		//--------------------------------------------------------------------------
 		// STEP 2: Backward pass, compute optimal control law and cost-to-go
@@ -139,8 +136,7 @@ double time_elapsed;
 
 		// std::cout << "Finished step 2 : backward pass. \n";
 
-		time_elapsed = (std::clock() - start) / (double)(CLOCKS_PER_SEC);
-		std::cout << "Took 2nd step " << time_elapsed << " seconds.\n";
+		double t_2 = (std::clock() - start) / (double)(CLOCKS_PER_SEC);
 
 		//--------------------------------------------------------------------------
 		// STEP 3: Forward pass / line-search to find new control sequence, trajectory, cost
@@ -183,9 +179,9 @@ double time_elapsed;
 		}
 
 		// std::cout << "Finished step 3 : forward pass. \n";
-	  time_elapsed = (std::clock() - start) / (double)(CLOCKS_PER_SEC);
-		std::cout << "Took 3rd step" << time_elapsed << " seconds.\n";
+	  double t_3 = (std::clock() - start) / (double)(CLOCKS_PER_SEC);
 
+		std::cout << "Step times: " << t_1 << ' ' << t_2 << ' ' << t_3 << '\n';
 	//--------------------------------------------------------------------------
 	// STEP 4: accept step (or not), print status
 	 	if (iter==0)
@@ -193,7 +189,6 @@ double time_elapsed;
 
 	 	if (fwdPassDone)
 	 	{
-	 		// TODO print stuff
 			printf("%-12d\t%-12.6g\t%-12.3g\t%-12.3g\t%-12.3g\t%-12.1f\n",
                 iter, new_cost, dcost, expected, gnorm, log10(lambda));
 

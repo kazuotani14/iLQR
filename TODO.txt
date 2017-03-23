@@ -6,7 +6,6 @@ Figure out where to put past inputs.
 
 Stuff to do (in approximate order)
 
-=======
 -------------
 TODO
 >>>>>>> b889efe... slightly organized code
@@ -27,26 +26,21 @@ Check inputs/outputs individually:
 
 - integrate cost for change in control input
 
-
 - write final control sequence and states to text file
 - test whole thing and see if output looks reasonable - plot in matlab
 
 -------------
 FASTER
-- optimize in this order: steps, 1, 2, 3
-
-- calculate_derivatives
+1. calculate_derivatives
 	- store auxiliary variables
 	- change incrementing method?
 
-- backward_pass
+2. backward_pass
 
+3. forward_pass
+	- vectorize for parallel line search?
 
-- make everything matrices instead of vectors of matrices?
 - see links in notes
-- consts everywhere
-- vectorize for parallel line search
-
 -----------
 Later on:
 - fix all the messy stuff
@@ -63,4 +57,4 @@ Later on:
 		- make skeleton for new Model class, for reference
 
 - add documentation
-- eigen helper functions are all inline right now to prevent duplicate symbol error - fix this
+- helper functions are all inline right now to prevent duplicate symbol error - move these to cpp file

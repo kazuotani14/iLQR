@@ -62,10 +62,12 @@ class iLQR
   void compute_derivatives(const VecOfVecXd &x, const VecOfVecXd &u, VecOfMatXd &fx,
   												 VecOfMatXd &fu, VecOfVecXd &cx, VecOfVecXd &cu,
   												 VecOfMatXd &cxx, VecOfMatXd &cxu, VecOfMatXd &cuu);
-  void get_dynamics_derivatives(const VecXd &x, const VecXd &u, MatXd &fx, MatXd &fu);
-  void get_cost_derivatives(const VecXd &x, const VecXd &u, VecXd &cx, VecXd &cu);
-  void get_cost_2nd_derivatives(const VecXd &x, const VecXd &u, MatXd &cxx, MatXd &cxu, MatXd &cuu);
-
+  void get_dynamics_derivatives(const VecOfVecXd &x, const VecOfVecXd &u,
+                                          VecOfMatXd &fx, VecOfMatXd &fu);
+  void get_cost_derivatives(const VecOfVecXd &x, const VecOfVecXd &u,
+  															   VecOfVecXd &cx, VecOfVecXd &cu);
+  void get_cost_2nd_derivatives(const VecOfVecXd &x, const VecOfVecXd &u,
+                                VecOfMatXd &cxx, VecOfMatXd &cxu, VecOfMatXd &cuu);
   void demoQP();
 
 public:
