@@ -2,16 +2,16 @@
 
 // TODO vectorize so we can do parallel line search. for now, do sequential
 
-double LocoCar::cost(const VecXd &x, const VecXd &u) 
+double LocoCar::cost(const VecXd &x, const VecXd &u)
 {
   // Input: n=8 state vector(s). 6 states, 2 precalculated du
   // columns of x and u will be each hypothesis
   //Coefficients/weights, TODO same initializations
-  Vec2d cu(pow(10,-4), pow(10,-4)); //control cost
-  Vec2d cdu(pow(10,-3), pow(10,-1)); cdu *= 50;  //change in control cost
+  Vec2d cu(1e-3, 1e-3); //control cost
+  Vec2d cdu(1e-1, 1e-2); cdu *= 50;  //change in control cost
 
-  Eigen::Vector3d cx(0.5, 0.5, 0.4); //running cost for pose
-  Eigen::Vector3d cdx(0.005, 0.005, 0.002); // running cost for velocities
+  Eigen::Vector3d cx(0.5, 0.1, 0.4); //running cost for pose
+  Eigen::Vector3d cdx(0.05, 0.005, 0.002); // running cost for velocities
   Eigen::Vector3d px(0.01, 0.01, 0.1); //smoothness scales for running cost
   double c_drift = -0.001;
 
@@ -54,6 +54,7 @@ double LocoCar::cost(const VecXd &x, const VecXd &u)
     lobs = kp_obs*Ustatic + kv_obs*Udynamic;
   }
 
+  // std::cout << "costs: " << lu << ' ' << lx << ' ' << ldu << ' ' << ld << ' ' << lobs <<'\n';
   double total_cost = lu + lx + ldu + ld + lobs;
   return total_cost;
 }; //cost
