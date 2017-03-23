@@ -46,7 +46,7 @@ int iLQR::backward_pass(const VecOfVecXd &cx, const VecOfVecXd &cu, const VecOfM
 	VecXd k_i(m);
 	MatXd K_i(m,n);
 
-	for (int i= T-1; i>=0; i--) // back up from end of trajectory 
+	for (int i= T-1; i>=0; i--) // back up from end of trajectory
 	{
 		Qx  = cx[i]      + fx[i].transpose() * Vx[i+1];
 		Qu  = cu[i]      + fu[i].transpose() * Vx[i+1];
@@ -83,7 +83,6 @@ int iLQR::backward_pass(const VecOfVecXd &cx, const VecOfVecXd &cu, const VecOfM
 		int result = boxQP(QuuF,Qu,k[std::min(i+1,T-1)],  k_i,R,free_v);
 
 		// std::cout << "k_i: \n" << k_i << '\n';
-
 
 		if (result<1){
 			return i;

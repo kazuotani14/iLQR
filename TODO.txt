@@ -46,7 +46,6 @@ Later on:
 - fix all the messy stuff
 	- extract methods into smaller methods, especially in fw, bw, boxQP
 
-
 - make it more readable
 	- see google cpp style guide
 	- refactor to completely separate iLQR class from Model class
