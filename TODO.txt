@@ -12,7 +12,7 @@ TODO
 - step 2~4 in iLQR_core
 	- check for termination due to small gradient
 
-Check inputs/outputs individually:
+Validate inputs/outputs against matlab individually:
 - compute_derivatives
 - forward_pass
 - backward_pass
@@ -31,9 +31,10 @@ Check inputs/outputs individually:
 
 -------------
 FASTER
-1. calculate_derivatives
+1. calculate_derivatives : this is taking most of the time
 	- store auxiliary variables
 	- change incrementing method?
+	- take analytic derivatives from DDP-generator
 
 2. backward_pass
 

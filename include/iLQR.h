@@ -68,7 +68,6 @@ class iLQR
   															   VecOfVecXd &cx, VecOfVecXd &cu);
   void get_cost_2nd_derivatives(const VecOfVecXd &x, const VecOfVecXd &u,
                                 VecOfMatXd &cxx, VecOfMatXd &cxu, VecOfMatXd &cuu);
-  void demoQP();
 
 public:
   const double timeDelta; //dt for euler integration
@@ -89,6 +88,10 @@ public:
 
   double init_traj(VecXd &x_0, VecOfVecXd &u0);
   void generate_trajectory(const VecXd &x_0, int trajectoryLength);
+
+  // Tester functions. Call these to test functionality 
+  void demoQP();
+
 };
 
 #endif
