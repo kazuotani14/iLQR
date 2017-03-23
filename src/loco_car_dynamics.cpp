@@ -33,17 +33,19 @@ Vec2d LocoCar::tire_dyn(double Ux, double Ux_cmd, double mu, double mu_slide,
   if (std::abs(alpha) > pi/2){
     alpha = (pi - std::abs(alpha))*sgn(alpha);
   }
+  std::cout << "alpha: " << alpha << '\n';
 
   double gamm = sqrt(sqr(C_x)*sqr(K/(1+K))+ sqr(C_alpha)*sqr(tan(alpha)/(1+K)));
 
   double F;
   if (gamm <= 3*mu*Fz){
-		F = gamm - 1/(3*mu*Fz)*(2-mu_slide/mu)*sqr(gamm) + 1/(9*sqr(mu)*sqr(Fz))*(1-(2/3)*(mu_slide/mu))*cube(gamm);
+		F = gamm - 1.0/(3*mu*Fz)*(2-mu_slide/mu)*sqr(gamm) + 1.0/(9*sqr(mu)*sqr(Fz))*(1-(2.0/3)*(mu_slide/mu))*cube(gamm);
   }
   else{
     // more accurate modeling with peak friction value
 		F = mu_slide*Fz;
   }
+  std::cout << "F: " << F << '\n';
 
   if (gamm == 0){
     Fx = 0;
@@ -55,11 +57,15 @@ Vec2d LocoCar::tire_dyn(double Ux, double Ux_cmd, double mu, double mu_slide,
   }
 
   F_tire << Fx, Fy;
+	std::cout << "F_tire: " << F_tire << '\n';
   return F_tire;
 } //tire_dyn
 
 VecXd LocoCar::dynamics(const VecXd &x, const VecXd &u)
 {
+  std::cout << "x: " << x << '\n';
+  std::cout << "u: " << u << '\n';
+
   double pos_x = x(0); double pos_y = x(1); double pos_phi = x(2);
   double Ux = x(3); double Uy = x(4); double r = x(5);
 
@@ -87,7 +93,7 @@ VecXd LocoCar::dynamics(const VecXd &x, const VecXd &u)
   // safety that keeps alphas in valid range
   alpha_F = wrap_to_pi(alpha_F);
   alpha_R = wrap_to_pi(alpha_R);
-  // std::cout << alpha_F << ' ' << alpha_R << '\n';
+  std::cout << "alpha_F: " << alpha_F << " alpha_R: " << alpha_R << '\n';
 
   Vec2d Ff = tire_dyn(Ux, Ux, mu, mu_spin, G_front, C_x, C_alpha, alpha_F);
   Vec2d Fr = tire_dyn(Ux, Ux_cmd, mu, mu_spin, G_rear, C_x, C_alpha, alpha_R);
