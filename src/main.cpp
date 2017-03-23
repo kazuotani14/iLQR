@@ -23,10 +23,21 @@ int main(){
 		}
 		car.u0 = u0;
 
+		std::clock_t start;
+		start = std::clock();
+
 		car.init_traj(x0,u0);
 		car.generate_trajectory(x0, x_d, T);
+
+		double time_elapsed = (std::clock() - start) / (double)(CLOCKS_PER_SEC);
+		std::cout << "Took " << time_elapsed << " seconds.\n";
 }
 
+
+// std::clock_t start;
+// start = std::clock();
+// double time_elapsed = (std::clock() - start) / (double)(CLOCKS_PER_SEC);
+// std::cout << "Took " << time_elapsed << " seconds.\n";
 
 // Dynamics check
 // VecXd x(6);

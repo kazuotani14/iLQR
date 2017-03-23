@@ -69,8 +69,8 @@ void iLQR::get_dynamics_derivatives(const VecXd &x, const VecXd &u,
 void iLQR::get_cost_derivatives(const VecXd &x, const VecXd &u,
 															VecXd &cx, VecXd &cu)
 {
-  cx.resize(n,1);
-  cu.resize(m,1);
+  cx.resize(n);
+  cu.resize(m);
 
   VecXd plus, minus;
   for (int i=0; i<n; i++)
@@ -102,35 +102,35 @@ void iLQR::get_cost_2nd_derivatives(const VecXd &x, const VecXd &u,
 
   //cxx
   for (int i=0; i<n; i++){
-    for (int j=0; j<n; j++){
+    for (int j=i; j<n; j++){
       pp = pm = mp = mm = x;
-      pp(i) += eps; pp(j) += eps;
-      pm(i) += eps; pm(j) -= eps;
-      mp(i) -= eps; mp(j) += eps;
-      mm(i) -= eps; mm(j) -= eps;
-      cxx(i,j) = (cost(pp, u) - cost(mp, u) - cost(pm, u) + cost(mm, u)) / (4*sqr(eps));
+      pp(i) = pm(i) += eps;
+      mp(i) = mm(i) -= eps;
+      pp(j) = mp(j) += eps;
+      pm(j) = mm(j) -= eps;
+      cxx(i,j) = cxx(j,i) = (cost(pp, u) - cost(mp, u) - cost(pm, u) + cost(mm, u)) / (4*sqr(eps));
     }
   }
   //cxu
   for (int i=0; i<n; i++){
     for (int j=0; j<m; j++){
       pp = pm = mp = mm = x;
-      pp(i) += eps; pp(j) += eps;
-      pm(i) += eps; pm(j) -= eps;
-      mp(i) -= eps; mp(j) += eps;
-      mm(i) -= eps; mm(j) -= eps;
+      pp(i) = pm(i) += eps;
+      mp(i) = mm(i) -= eps;
+      pp(j) = mp(j) += eps;
+      pm(j) = mm(j) -= eps;
       cxu(i,j) = (cost(pp, u) - cost(mp, u) - cost(pm, u) + cost(mm, u)) / (4*sqr(eps));
     }
   }
   //cuu
   for (int i=0; i<m; i++){
-    for (int j=0; j<m; j++){
+    for (int j=i; j<m; j++){
       pp = pm = mp = mm = x;
-      pp(i) += eps; pp(j) += eps;
-      pm(i) += eps; pm(j) -= eps;
-      mp(i) -= eps; mp(j) += eps;
-      mm(i) -= eps; mm(j) -= eps;
-      cuu(i,j) = (cost(pp, u) - cost(mp, u) - cost(pm, u) + cost(mm, u)) / (4*sqr(eps));
+      pp(i) = pm(i) += eps;
+      mp(i) = mm(i) -= eps;
+      pp(j) = mp(j) += eps;
+      pm(j) = mm(j) -= eps;
+      cuu(i,j) = cuu(j,i) = (cost(pp, u) - cost(mp, u) - cost(pm, u) + cost(mm, u)) / (4*sqr(eps));
     }
   }
 } //get_cost_2nd_derivatives

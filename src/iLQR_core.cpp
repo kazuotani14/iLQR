@@ -86,6 +86,10 @@ void iLQR::generate_trajectory(const VecXd &x_0, const VecXd &x_d, const int tra
 	int diverge = 0;
 	std::cout << "\n=========== begin iLQG ===========\n";
 
+
+std::clock_t start;
+double time_elapsed;
+
 	int iter;
 	for (iter=0; iter<maxIter; iter++)
 	{
@@ -95,14 +99,20 @@ void iLQR::generate_trajectory(const VecXd &x_0, const VecXd &x_d, const int tra
 		// std::cout << "Iteration " << iter << ".\n";
 		//--------------------------------------------------------------------------
 		// STEP 1: Differentiate dynamics and cost along new trajectory
+		start = std::clock();
+
 		if (flgChange){
 			compute_derivatives(xs,us, fx,fu,cx,cu,cxx,cxu,cuu);
 			flgChange = 0;
 		}
 		// std::cout << "Finished step 1 : compute derivatives. \n";
+		time_elapsed = (std::clock() - start) / (double)(CLOCKS_PER_SEC);
+		std::cout << "Took 1st step " << time_elapsed << " seconds.\n";
 
 		//--------------------------------------------------------------------------
 		// STEP 2: Backward pass, compute optimal control law and cost-to-go
+		start = std::clock();
+
 		bool backPassDone = false;
 		while (!backPassDone)
 		{
@@ -129,8 +139,13 @@ void iLQR::generate_trajectory(const VecXd &x_0, const VecXd &x_d, const int tra
 
 		// std::cout << "Finished step 2 : backward pass. \n";
 
+		time_elapsed = (std::clock() - start) / (double)(CLOCKS_PER_SEC);
+		std::cout << "Took 2nd step " << time_elapsed << " seconds.\n";
+
 		//--------------------------------------------------------------------------
 		// STEP 3: Forward pass / line-search to find new control sequence, trajectory, cost
+		start = std::clock();
+
 		bool fwdPassDone = 0;
 		VecOfVecXd xnew(trajectoryLength+1);
 		VecOfVecXd unew(trajectoryLength);
@@ -168,6 +183,8 @@ void iLQR::generate_trajectory(const VecXd &x_0, const VecXd &x_d, const int tra
 		}
 
 		// std::cout << "Finished step 3 : forward pass. \n";
+	  time_elapsed = (std::clock() - start) / (double)(CLOCKS_PER_SEC);
+		std::cout << "Took 3rd step" << time_elapsed << " seconds.\n";
 
 	//--------------------------------------------------------------------------
 	// STEP 4: accept step (or not), print status

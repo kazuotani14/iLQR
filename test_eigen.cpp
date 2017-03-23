@@ -60,10 +60,13 @@ MatXd finite_differences(VecXd &x,
 int main()
 {
 
-  for (int i=0; i<5; i++){
-    std::cout << Vec2d::Random() << "\n\n";
-  }
-
+  // for (int i=0; i<5; i++){
+  //   std::cout << Vec2d::Random() << "\n\n";
+  // }
+  int a,b;
+  a = b = 1;
+  a = b+= 5;
+  std::cout << a << ' ' << b << '\n';
 
   Eigen::Matrix2d y;
   y << 1, 2, 3, 4;

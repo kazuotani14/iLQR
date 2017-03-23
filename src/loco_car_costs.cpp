@@ -4,6 +4,7 @@
 
 double LocoCar::cost(const VecXd &x, const VecXd &u)
 {
+
   // Input: n=8 state vector(s). 6 states, 2 precalculated du
   // columns of x and u will be each hypothesis
 

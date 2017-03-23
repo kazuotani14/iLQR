@@ -1,18 +1,14 @@
-Test everything individually by replicating function, testing with multiple
-inputs, and comparing vs matlab.
-Write tests for functions before starting implementation (if it's simple enough)
-Best way to do this - refactor into a standalone function during testing?
-
 For now, I am skipping the vectorization/parallelization of the forward pass so that
 we can get this up and running quickly.
+Eigen doesn't support 3D matrices...
 
 Figure out where to put past inputs.
+
 
 Stuff to do (in approximate order)
 
 - step 2~4 in iLQR_core
 	- check for termination due to small gradient
-- make sure everything compiles and runs when generate_trajectory is called (no eigen fails)
 
 Check inputs/outputs individually:
 - compute_derivatives
@@ -25,7 +21,6 @@ Check inputs/outputs individually:
 - iLQR::backward_pass -
 - step 2 in iLQR_core
 - step 3 in iLQR_core
->>>>>>> 50a6a74... Update TODO.txt
 
 - integrate cost for change in control input
 - printing stuff in iLQR_main at every iteration
@@ -38,12 +33,16 @@ Later on:
 	- figure out how to have less arguments for methods - pass structs
 	- extract methods into smaller methods, especially in fw, bw, boxQP
 
+
+
 - make it faster
+	- make everything matrices instead of vectors of matrices
 	- see what the ddp-generator guy did to optimize
 		- only calculate upper triangle in symmetric matrices
 	- see links in notes
 	- consts everywhere
 	- vectorize for parallel line search
+
 
 - make ir more readable
 	- see google cpp style guide

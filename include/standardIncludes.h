@@ -7,6 +7,7 @@
 #include <eigen/Eigen/StdVector>
 #include <iostream>
 #include <math.h>
+#include <time.h>
 
 #define Eye2 Eigen::Matrix2d::Identity(2,2);
 
