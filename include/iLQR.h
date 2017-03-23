@@ -32,7 +32,7 @@ class iLQR
   MatXd control_limits;
   VecXd x_current;
   VecXd u_current;
-  double initial_cost;
+  double cost_s;
 
   // Helper functions will modify passed-in variables instead of returning values,
   //  because most of them need to return multiple values.
@@ -45,13 +45,14 @@ class iLQR
 
   int backward_pass(const VecOfVecXd &cx, const VecOfVecXd &cu, const VecOfMatXd &cxx, const VecOfMatXd &cxu,
   									const VecOfMatXd &cuu, const VecOfMatXd &fx, const VecOfMatXd &fu, const VecOfVecXd &u,
-  									VecOfVecXd Vx, VecOfMatXd Vxx, VecOfVecXd k, VecOfMatXd K, Vec2d dV);
+  									VecOfVecXd &Vx, VecOfMatXd &Vxx, VecOfVecXd &k, VecOfMatXd &K, Vec2d &dV);
 
   VecXd clamp_to_limits(VecXd &u);
   int boxQP(MatXd &H, VecXd &g, VecXd &x0,  VecXd &x, MatXd& Hfree, VecXd &free);
 
   MatXd rows_w_ind(MatXd &mat, VecXd &rows);
   VecXd subvec_w_ind(VecXd &vec, VecXd &indices);
+  VecOfVecXd adjust_u(VecOfVecXd &u, VecOfVecXd &l, double alpha);
 
 public:
   VecXd x_d; // target state
@@ -75,6 +76,7 @@ public:
 
   // Pure virtual functions, to be overridden in LocoCar
   virtual VecXd dynamics(const VecXd &x, const VecXd &u) = 0; //dynamics
+  virtual VecXd integrate_dynamics(const VecXd &x, const VecXd u) = 0;
   virtual double cost(const VecXd &x, const VecXd &u) = 0;
   virtual double final_cost(const VecXd &x) = 0;
 

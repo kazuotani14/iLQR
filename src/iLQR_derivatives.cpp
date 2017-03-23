@@ -1,6 +1,6 @@
 #include "iLQR.h"
 
-#define eps 0.01
+#define eps 1e-6 // For finite differencing
 
 // This has a weird condition based on number of outputs in MATLAB code. I split it into two functions
 double iLQR::get_nextstate_and_cost(const VecXd &x, const VecXd u, VecXd &x1)
@@ -24,6 +24,15 @@ void iLQR::compute_derivatives(const VecOfVecXd &x, const VecOfVecXd &u, VecOfMa
     get_dynamics_derivatives(x[t], u[t], fx[t], fu[t]);
     get_cost_derivatives(x[t], u[t], cx[t], cu[t]);
     get_cost_2nd_derivatives(x[t], u[t], cxx[t], cxu[t], cuu[t]);
+    // std::cout << t << '\n';
+    // std::cout << "fx[t]: \n" << fx[t] << '\n';
+    // std::cout << "fu[t]: \n" << fu[t] << '\n';
+    // std::cout << "cx[t]: \n" << cx[t] << '\n';
+    // std::cout << "cu[t]: \n" << cu[t] << '\n';
+    // std::cout << "cxx[t]: \n" << cxx[t] << '\n';
+    // std::cout << "cxu[t]: \n" << cxu[t] << '\n';
+    // std::cout << "cuu[t]: \n" << cuu[t] << '\n';
+    // getchar();
   }
 }
 
@@ -42,16 +51,18 @@ void iLQR::get_dynamics_derivatives(const VecXd &x, const VecXd &u,
   for (int i=0; i<n; i++)
   {
     plus = minus = x;
+
     plus(i) += eps;
-    minus(i) += eps;
-    fx.col(i) = (dynamics(plus, u)-dynamics(minus, u)) / (2*eps);
+    minus(i) -= eps;
+
+    fx.col(i) = (integrate_dynamics(plus, u)-integrate_dynamics(minus, u)) / (2*eps);
   }
 
   for (int i=0; i<m; i++){
     plus = minus = u;
     plus(i) += eps;
-    minus(i) += eps;
-    fu.col(i) = (dynamics(x, plus)-dynamics(x, minus)) / (2*eps);
+    minus(i) -= eps;
+    fu.col(i) = (integrate_dynamics(x, plus)-integrate_dynamics(x, minus)) / (2*eps);
   }
 }
 
@@ -66,14 +77,14 @@ void iLQR::get_cost_derivatives(const VecXd &x, const VecXd &u,
   {
     plus = minus = x;
     plus(i) += eps;
-    minus(i) += eps;
+    minus(i) -= eps;
     cx(i) = (cost(plus, u)-cost(minus, u)) / (2*eps);
   }
 
   for (int i=0; i<m; i++){
     plus = minus = u;
     plus(i) += eps;
-    minus(i) += eps;
+    minus(i) -= eps;
     cu(i) = (cost(x, plus)-cost(x, minus)) / (2*eps);
   }
 }
@@ -88,15 +99,16 @@ void iLQR::get_cost_2nd_derivatives(const VecXd &x, const VecXd &u,
   //TODO remove repetition
 
   VecXd pp, pm, mp, mm; //plus-plus, plus-minus, ....
+
   //cxx
   for (int i=0; i<n; i++){
     for (int j=0; j<n; j++){
       pp = pm = mp = mm = x;
       pp(i) += eps; pp(j) += eps;
-      pm(i) += eps; pm(j) += eps;
-      mp(i) -= eps; mp(j) -= eps;
+      pm(i) += eps; pm(j) -= eps;
+      mp(i) -= eps; mp(j) += eps;
       mm(i) -= eps; mm(j) -= eps;
-      cxx(i,j) = (cost(mm, u) + cost(pp, u) + cost(pm, u) + cost(mp, u)) / (4*sqr(eps));
+      cxx(i,j) = (cost(pp, u) - cost(mp, u) - cost(pm, u) + cost(mm, u)) / (4*sqr(eps));
     }
   }
   //cxu
@@ -104,10 +116,10 @@ void iLQR::get_cost_2nd_derivatives(const VecXd &x, const VecXd &u,
     for (int j=0; j<m; j++){
       pp = pm = mp = mm = x;
       pp(i) += eps; pp(j) += eps;
-      pm(i) += eps; pm(j) += eps;
-      mp(i) -= eps; mp(j) -= eps;
+      pm(i) += eps; pm(j) -= eps;
+      mp(i) -= eps; mp(j) += eps;
       mm(i) -= eps; mm(j) -= eps;
-      cxu(i,j) = (cost(mm, u) + cost(pp, u) + cost(pm, u) + cost(mp, u)) / (4*sqr(eps));
+      cxu(i,j) = (cost(pp, u) - cost(mp, u) - cost(pm, u) + cost(mm, u)) / (4*sqr(eps));
     }
   }
   //cuu
@@ -115,10 +127,10 @@ void iLQR::get_cost_2nd_derivatives(const VecXd &x, const VecXd &u,
     for (int j=0; j<m; j++){
       pp = pm = mp = mm = x;
       pp(i) += eps; pp(j) += eps;
-      pm(i) += eps; pm(j) += eps;
-      mp(i) -= eps; mp(j) -= eps;
+      pm(i) += eps; pm(j) -= eps;
+      mp(i) -= eps; mp(j) += eps;
       mm(i) -= eps; mm(j) -= eps;
-      cuu(i,j) = (cost(mm, u) + cost(pp, u) + cost(pm, u) + cost(mp, u)) / (4*sqr(eps));
+      cuu(i,j) = (cost(pp, u) - cost(mp, u) - cost(pm, u) + cost(mm, u)) / (4*sqr(eps));
     }
   }
 } //get_cost_2nd_derivatives

@@ -3,9 +3,13 @@
 MatXd iLQR::rows_w_ind(MatXd &mat, VecXd &indices)
 {
 	MatXd submat;
-	for(int i=0; i<mat.rows(); i++){
+  if(mat.rows() != indices.size()){
+    std::cout << "mat.rows != indices.size\n";
+    return submat;
+  }
+	for(int i=0; i<indices.size(); i++){
 		if(indices(i)>0){
-			submat.resize(submat.rows()+1, mat.cols());
+      submat.conservativeResizeLike(MatXd(submat.rows()+1, mat.cols()));
 			submat.row(submat.rows()-1) = mat.row(i);
 		}
 	}
@@ -15,7 +19,7 @@ MatXd iLQR::rows_w_ind(MatXd &mat, VecXd &indices)
 int iLQR::backward_pass(const VecOfVecXd &cx, const VecOfVecXd &cu, const VecOfMatXd &cxx, const VecOfMatXd &cxu,
 												const VecOfMatXd &cuu, const VecOfMatXd &fx, const VecOfMatXd &fu, const VecOfVecXd &u,
 
-												VecOfVecXd Vx, VecOfMatXd Vxx, VecOfVecXd k, VecOfMatXd K, Vec2d dV)
+												VecOfVecXd &Vx, VecOfMatXd &Vxx, VecOfVecXd &k, VecOfMatXd &K, Vec2d &dV)
 {
 /*
 // 	INPUTS
@@ -46,6 +50,9 @@ int iLQR::backward_pass(const VecOfVecXd &cx, const VecOfVecXd &cu, const VecOfM
 	{
 		Qx  = cx[i]      + fx[i].transpose() * Vx[i+1];
 		Qu  = cu[i]      + fu[i].transpose() * Vx[i+1];
+		// std::cout << "fu: \n" << fu[i] << '\n';
+		// std::cout << "Vx: \n" << Vx[i+1] << '\n';
+		// std::cout << "cu: \n" << cu[i] << '\n';
 
 		Qxx = cxx[i] + fx[i].transpose()*Vxx[i+1]*fx[i];
 
@@ -62,12 +69,21 @@ int iLQR::backward_pass(const VecOfVecXd &cx, const VecOfVecXd &cu, const VecOfM
 		// Second term is regularization
     MatXd QuuF = cuu[i] + fu[i].transpose()*Vxx_reg*fu[i] + lambda*Eye2;
 
-		// TODO
 		// Impose control limits with boxQP
 		VecXd k_i(m);
 		MatXd R(m,m);
 		VecXd free_v(m);
-		int result = boxQP(QuuF,Qu,k[std::min(i+1,T-1)],  k_i,R,free_v); //TODO check indices
+
+		// std::cout << "inputs: \n";
+		// std::cout << "QuuF: \n" << QuuF << '\n';
+		// std::cout << "Qu: \n" << Qu << '\n';
+		// std::cout << "k: \n" << k[std::min(i+1,T-1)] << '\n';
+		// std::cout << i+1 << ' ' << T-1 << '\n';
+
+		int result = boxQP(QuuF,Qu,k[std::min(i+1,T-1)],  k_i,R,free_v);
+
+		// std::cout << "k_i: \n" << k_i << '\n';
+
 
 		if (result<1){
 			return i;
@@ -88,6 +104,8 @@ int iLQR::backward_pass(const VecOfVecXd &cx, const VecOfVecXd &cu, const VecOfM
 			}
 		}
 
+		// std::cout << "K_i: \n" << K_i << '\n';
+
 		// update cost-to-go approximation
 		dV(0) += k_i.transpose()*Qu;
 		dV(1) += 0.5*k_i.transpose()*Quu*k_i;
@@ -96,6 +114,12 @@ int iLQR::backward_pass(const VecOfVecXd &cx, const VecOfVecXd &cu, const VecOfM
 		Vxx[i] = Qxx + K_i.transpose()*Quu*K_i + K_i.transpose()*Qux + Qux.transpose()*K_i;
 		Vxx[i] = 0.5 * (Vxx[i] + Vxx[i].transpose());
 
+		// std::cout << "Vx: \n" << Vx[i] << '\n';
+		// std::cout << "Vxx: \n" << Vxx[i] << '\n';
+		//
+		// std::cout << "\n-------------\n";
+		// std::cout << "K_i: \n" << K_i << '\n';
+		// getchar();
 
     // save controls/gains
     k[i]     = k_i;

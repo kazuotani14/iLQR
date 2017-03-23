@@ -4,6 +4,22 @@
 #include <vector>
 #include "include/standardIncludes.h"
 
+MatXd rows_w_ind(MatXd &mat, VecXd &indices)
+{
+  MatXd submat;
+  if(mat.rows() != indices.size()){
+    std::cout << "mat.rows != indices.size\n";
+    return submat;
+  }
+	for(int i=0; i<indices.size(); i++){
+		if(indices(i)>0){
+      std::cout << i << '\n';
+      submat.conservativeResizeLike(MatXd(submat.rows()+1, mat.cols()));
+			submat.row(submat.rows()-1) = mat.row(i);
+		}
+	}
+	return submat;
+}
 
 double x_squared(double x){
 	double y = x*x;
@@ -44,6 +60,11 @@ MatXd finite_differences(VecXd &x,
 int main()
 {
 
+  for (int i=0; i<5; i++){
+    std::cout << Vec2d::Random() << "\n\n";
+  }
+
+
   Eigen::Matrix2d y;
   y << 1, 2, 3, 4;
 
@@ -72,11 +93,22 @@ int main()
 	VecXd k_i(m);
 	MatXd K_i(m,n);
 
-  std::cout << "K_i: " << K_i.rows() << ' ' << K_i.cols() << '\n';
-  std::cout << "Quu: " << Quu.rows() << ' ' << Quu.cols() << '\n';
 
-  MatXd test1 =  K_i.transpose()*Quu*K_i;
-  MatXd test2 =  K_i.transpose()*Qux;
+  MatXd Lfree(m,n);
+  MatXd R(2,2);
+  R <<  1.0012, -0.0069,
+         0 ,   1.5170;
+  MatXd Qux_reg(m,n);
+  Qux_reg << -0.0124,    0.0101,    0.0113 ,   0.0100,   -0.0196,    0.0065 ,
+              -0.5332,    0.1886,   -0.7361,    1.7398,   -2.3677,   -0.4859;
+  VecXd free_v(2); free_v << 1,1;
+
+  // std::cout << rows_w_ind(Qux_reg, free_v) << "\n\n";
+  // std::cout << "-------\n";
+  //
+  // Lfree = -R.inverse() * (R.transpose().inverse()*rows_w_ind(Qux_reg, free_v));
+
+  // std::cout << Lfree << '\n';
   // VecXd test2 =  K_i.transpose()*Qux;
 
   // VecXd test_push;

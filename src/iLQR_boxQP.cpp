@@ -42,6 +42,11 @@ int iLQR::boxQP(MatXd &H, VecXd &g, VecXd &x0,  VecXd &x, MatXd& Hfree, VecXd &f
 											- vector of 0 or 1
 */
 
+	// std::cout << "H:\n" << H << '\n';
+	// std::cout << "g:\n" << H << '\n';
+	// std::cout << "x0:\n" << H << '\n';
+	// std::cout << "---------\n";
+
 	free_v.resize(m);
 
 	// Optimization parameters

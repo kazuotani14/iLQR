@@ -6,6 +6,7 @@ double LocoCar::cost(const VecXd &x, const VecXd &u)
 {
   // Input: n=8 state vector(s). 6 states, 2 precalculated du
   // columns of x and u will be each hypothesis
+
   //Coefficients/weights, TODO same initializations
   Vec2d cu(1e-3, 1e-3); //control cost
   Vec2d cdu(1e-1, 1e-2); cdu *= 50;  //change in control cost
@@ -17,12 +18,13 @@ double LocoCar::cost(const VecXd &x, const VecXd &u)
 
   double kp_obs = 0.5; // obstacle costs
   double kv_obs = 0.1;
-  double dist_thres = 0.3;
+  double dist_thres = 0.5;
 
   //COSTS
   //control cost
-  double lu = cu.dot(elem_square(u));
-  double ldu = cdu.dot(elem_square(x.tail(2)));
+  double lu = cu.dot(elem_square(u-x.segment<2>(3)));
+  // double ldu = cdu.dot(elem_square(x.tail(2)));
+  double ldu = 0; //TODO implement this
 
   //running cost
   Eigen::Vector3d dist = x.head(3) - x_d.head(3);

@@ -11,10 +11,11 @@ Figure out where to put past inputs.
 Stuff to do (in approximate order)
 
 - step 2~4 in iLQR_core
+	- check for termination due to small gradient
 - make sure everything compiles and runs when generate_trajectory is called (no eigen fails)
 
 Check inputs/outputs individually:
-- init_traj
+- compute_derivatives
 - forward_pass
 - backward_pass
 

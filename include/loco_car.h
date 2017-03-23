@@ -33,11 +33,13 @@ public:
              Iz(0.025), mu(0.45), mu_spin(0.2), a(0.11372), G_front(12.852550506),
              G_rear(10.200949494) { }
 
-  VecXd dynamics(const VecXd &x, const VecXd &u) ; //dynamics
+  VecXd dynamics(const VecXd &x, const VecXd &u); //dynamics
 
-  double cost(const VecXd &x, const VecXd &u) ;
+  double cost(const VecXd &x, const VecXd &u);
 
-  double final_cost(const VecXd &x) ;
+  double final_cost(const VecXd &x);
+
+  VecXd integrate_dynamics(const VecXd &x, const VecXd u);
 
 };
 
