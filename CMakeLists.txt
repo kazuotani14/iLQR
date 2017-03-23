@@ -1,16 +1,19 @@
 cmake_minimum_required(VERSION 3.7.0)
 project (iLQR)
 
-include_directories(include)
-
-file (GLOB SOURCES "src/*.cpp")
 
 # find_package(Eigen REQUIRED)
 
-add_executable(run_iLQR src/loco_car_main.cpp
-												src/loco_car_dynamics.cpp
-												src/loco_car_costs.cpp
-  											src/iLQR_dynamics_derivatives.cpp
-												src/iLQR_core.cpp
-												src/iLQR_forward_pass.cpp
-												src/iLQR_backward_pass.cpp)
+file(GLOB_RECURSE Foo_SOURCES "src/*.cpp")
+
+file(GLOB_RECURSE Foo_HEADERS "include/*.h")
+
+set (Foo_INCLUDE_DIRS "")
+foreach (_headerFile ${Foo_HEADERS})
+    get_filename_component(_dir ${_headerFile} PATH)
+    list (APPEND Foo_INCLUDE_DIRS ${_dir})
+endforeach()
+list(REMOVE_DUPLICATES Foo_INCLUDE_DIRS)
+
+include_directories(${Foo_INCLUDE_DIRS})
+add_executable (run_iLQR ${Foo_SOURCES})

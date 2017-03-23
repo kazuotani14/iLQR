@@ -1,10 +1,10 @@
 #include "loco_car.h"
 
-Eigen::Vector2d LocoCar::tire_dyn(double Ux, double Ux_cmd, double mu, double mu_slide,
+Vec2d LocoCar::tire_dyn(double Ux, double Ux_cmd, double mu, double mu_slide,
                   double Fz, double C_x, double C_alpha, double alpha)
 {
   double Fx, Fy;
-  Eigen::Vector2d F_tire;
+  Vec2d F_tire;
 
   //longitude wheel slip
   double K;
@@ -31,18 +31,18 @@ Eigen::Vector2d LocoCar::tire_dyn(double Ux, double Ux_cmd, double mu, double mu
   // alpha > pi/2 cannot be adapted to this formula
   // because of the use of tan(). Use the equivalent angle instead.
   if (std::abs(alpha) > pi/2){
-    alpha = (std::abs(alpha)-pi/2)*sgn(alpha);
+    alpha = (pi - std::abs(alpha))*sgn(alpha);
   }
 
   double gamm = sqrt(sqr(C_x)*sqr(K/(1+K))+ sqr(C_alpha)*sqr(tan(alpha)/(1+K)));
 
   double F;
   if (gamm <= 3*mu*Fz){
-    F = gamm - 1/(3*mu*Fz)*sqr(gamm) + 1/(27*sqr(mu)*sqr(Fz))*(sqr(gamm)*gamm);
+		F = gamm - 1/(3*mu*Fz)*(2-mu_slide/mu)*sqr(gamm) + 1/(9*sqr(mu)*sqr(Fz))*(1-(2/3)*(mu_slide/mu))*cube(gamm);
   }
   else{
     // more accurate modeling with peak friction value
-    F = (mu_slide + (mu-mu_slide)/(1 + sqr((gamm-3*mu*Fz)/27)))*Fz;
+		F = mu_slide*Fz;
   }
 
   if (gamm == 0){
@@ -89,8 +89,8 @@ VecXd LocoCar::dynamics(const VecXd &x, const VecXd &u)
   alpha_R = wrap_to_pi(alpha_R);
   // std::cout << alpha_F << ' ' << alpha_R << '\n';
 
-  Eigen::Vector2d Ff = tire_dyn(Ux, Ux, mu, mu_spin, G_front, C_x, C_alpha, alpha_F);
-  Eigen::Vector2d Fr = tire_dyn(Ux, Ux_cmd, mu, mu_spin, G_rear, C_x, C_alpha, alpha_R);
+  Vec2d Ff = tire_dyn(Ux, Ux, mu, mu_spin, G_front, C_x, C_alpha, alpha_F);
+  Vec2d Fr = tire_dyn(Ux, Ux_cmd, mu, mu_spin, G_rear, C_x, C_alpha, alpha_R);
   double Fxf, Fyf, Fxr, Fyr;
   Fxf = Ff(0); Fyf = Ff(1); Fxr = Fr(0); Fyr = Fr(1);
 
@@ -126,8 +126,5 @@ VecXd LocoCar::dynamics(const VecXd &x, const VecXd &u)
   VecXd dx(6);
   dx << Ux_terrain, Uy_terrain, r, Ux_dot, Uy_dot, r_dot;
 
-	VecXd newx;
-	newx = x + timeDelta*dx;
-
-  return newx;
+  return dx;
 } //dynamics

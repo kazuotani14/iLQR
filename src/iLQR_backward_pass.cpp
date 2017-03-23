@@ -1,11 +1,23 @@
-#include "iLQR2.h"
+#include "iLQR.h"
+
+MatXd iLQR::rows_w_ind(MatXd &mat, VecXd &indices)
+{
+	MatXd submat;
+	for(int i=0; i<mat.rows(); i++){
+		if(indices(i)>0){
+			submat.resize(submat.rows()+1, mat.cols());
+			submat.row(submat.rows()-1) = mat.row(i);
+		}
+	}
+	return submat;
+}
 
 int iLQR::backward_pass(const VecOfVecXd &cx, const VecOfVecXd &cu, const VecOfMatXd &cxx, const VecOfMatXd &cxu,
 												const VecOfMatXd &cuu, const VecOfMatXd &fx, const VecOfMatXd &fu, const VecOfVecXd &u,
 
 												VecOfVecXd Vx, VecOfMatXd Vxx, VecOfVecXd k, VecOfMatXd K, Vec2d dV)
 {
-// /*
+/*
 // 	INPUTS
 // 	   cx: 2x(T+1)					cu: 2x(T+1)
 // 		 cuu: nxnx(T+1)				cxx: nxnx(T+1)	cuu: 2x2x(T+1)
@@ -15,29 +27,80 @@ int iLQR::backward_pass(const VecOfVecXd &cx, const VecOfVecXd &cu, const VecOfM
 // 	   Vx: nx(T+1)			Vxx: nxnx(T+1)			l:2xT
 // 	   L: 2xnxT 				dV: 2x1
 // 		 diverge - returns 0 if it doesn't diverge, timestep where it diverges otherwise
-//  */
-
-	// preprocessing - resize outputs k, K, Vx, Vxx, dV
+*/
 
 	//cost-to-go at end
-	//Vx(:,T)     = cx(:,T);
-	//Vxx(:,:,T)  = cxx(:,:,T);
+	Vx[T]     = cx[T];
+	Vxx[T]    = cxx[T];
 
-	//initialize Qu, Qx, Qxx, Qxu, Quu
+	//initialize Qu, Qx, Qxx, Qxu, Quu, k_i, K_i
+	VecXd Qx(n);
+	VecXd Qu(m);
+	MatXd Qxx(n,n);
+	MatXd Qux(m,n);
+	MatXd Quu(m,m);
+	VecXd k_i(m);
+	MatXd K_i(m,n);
 
-	int diverge = 0;
-	for (int i= T-1; i>0; i--) // back up from end of trajectory TODO check start index
+	for (int i= T-1; i>=0; i--) // back up from end of trajectory TODO check start index
 	{
-		// Qu  = cu(:,i)      + fu(:,:,i)'*Vx(:,i+1);
-		// Qx  = cx(:,i)      + fx(:,:,i)'*Vx(:,i+1);
-		// Qux = cxu(:,:,i)'  + fu(:,:,i)'*Vxx(:,:,i+1)*fx(:,:,i);
+		Qx  = cx[i]      + fx[i].transpose() * Vx[i+1];
+		Qu  = cu[i]      + fu[i].transpose() * Vx[i+1];
 
-		//  //TODO this stuff
+		Qxx = cxx[i] + fx[i].transpose()*Vxx[i+1]*fx[i];
+
+		Qux = cxu[i].transpose() + fu[i].transpose()*Vxx[i+1]*fx[i];
+
+    Quu = cuu[i] + fu[i].transpose()*Vxx[i+1]*fu[i];
+
+		// We are using regularization type 1 (Tassa's code): q_uu+lambda*eye()
+		// So Vxx does not have to be regularized
+    MatXd Vxx_reg = Vxx[i+1];
+
+		MatXd Qux_reg = cxu[i].transpose() + fu[i].transpose()*Vxx_reg*fx[i];
+
+		// Second term is regularization
+    MatXd QuuF = cuu[i] + fu[i].transpose()*Vxx_reg*fu[i] + lambda*Eye2;
+
+		// TODO
+		// Impose control limits with boxQP
+		VecXd k_i(m);
+		MatXd R(m,m);
+		VecXd free_v(m);
+		int result = boxQP(QuuF,Qu,k[std::min(i+1,T-1)],  k_i,R,free_v); //TODO check indices
+
+		if (result<1){
+			return i;
+		}
+
+		if (free_v.any()){
+			MatXd Lfree(m,n);
+			Lfree = -R.inverse() * (R.transpose().inverse()*rows_w_ind(Qux_reg, free_v));
+			// TODO fix this hack
+			if(free_v[0]==1 && free_v[1]==1){
+				K_i = Lfree;
+			}
+			else if (free_v[0]==1){
+				K_i.row(0) = Lfree;
+			}
+			else if (free_v[1]==1){
+				K_i.row(1) = Lfree;
+			}
+		}
+
+		// update cost-to-go approximation
+		dV(0) += k_i.transpose()*Qu;
+		dV(1) += 0.5*k_i.transpose()*Quu*k_i;
+
+		Vx[i]  = Qx  + K_i.transpose()*Quu*k_i + K_i.transpose()*Qu + Qux.transpose()*k_i;
+		Vxx[i] = Qxx + K_i.transpose()*Quu*K_i + K_i.transpose()*Qux + Qux.transpose()*K_i;
+		Vxx[i] = 0.5 * (Vxx[i] + Vxx[i].transpose());
 
 
+    // save controls/gains
+    k[i]     = k_i;
+    K[i]     = K_i;
 	}
 
-
-
-	return diverge;
+	return 0;
 }

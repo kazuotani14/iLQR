@@ -9,32 +9,39 @@ we can get this up and running quickly.
 Figure out where to put past inputs.
 
 Stuff to do (in approximate order)
-- iLQR::init_traj (check pending)
-- iLQR::forward_pass - almost done, need control_limits to be implemented
-- iLQR::backward_pass -
-- step 2 in iLQR_core
-- step 3 in iLQR_core
+- step 2~4 in iLQR_core
+- make sure everything compiles and runs when generate_trajectory is called (no eigen fails)
+
+Check inputs/outputs individually:
+- tire model
+- init_traj
+- forward_pass
+- backward_pass
 
 - integrate cost for change in control input
 - printing stuff in iLQR_main at every iteration
-- simple version in boxQP
 - write final control sequence and states to text file
-- test whole thing and see if output looks reasonable
-- iLQR::boxQP
-
+- test whole thing and see if output looks reasonable - plot in matlab
 
 Later on:
 - fix all the messy stuff
-	- sort out public/private
+	- sort out public/private in classes
+	- figure out how to have less arguments for methods - pass structs
+	- extract methods into smaller methods, especially in fw, bw, boxQP
 
 - make it faster
-	- vectorize for parallel line search
+	- see what the ddp-generator guy did to optimize
+		- only calculate upper triangle in symmetric matrices
 	- see links in notes
 	- consts everywhere
-	- see what the ddp-generator guy did to optimize
+	- vectorize for parallel line search
 
-- refactor to completely separate iLQR class from Model class
-- make it reusable
-	- make skeleton for new Model class, for reference
+- make ir more readable
+	- see google cpp style guide
+	- refactor to completely separate iLQR class from Model class
+		- make sure everything in iLQR is dimension-agnostic
+	- make it reusable
+		- make skeleton for new Model class, for reference
 
 - add documentation
+- eigen helper functions are all inline right now to prevent duplicate symbol error

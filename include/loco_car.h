@@ -2,7 +2,7 @@
 #define _LOCO_CAR_H_
 
 #include "standardIncludes.h"
-#include "iLQR2.h"
+#include "iLQR.h"
 
 class LocoCar : public iLQR
 {

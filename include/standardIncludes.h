@@ -8,9 +8,11 @@
 #include <iostream>
 #include <math.h>
 
+#define Eye2 Eigen::Matrix2d::Identity(2,2);
+
+typedef Eigen::Vector2d Vec2d;
 typedef Eigen::VectorXd VecXd;
 typedef Eigen::MatrixXd MatXd;
-typedef Eigen::Vector2d Vec2d;
 typedef std::vector<VecXd> VecOfVecXd;
 typedef std::vector<MatXd>  VecOfMatXd;
 
@@ -21,6 +23,9 @@ const double pi = M_PI;
 
 template<typename T>
 inline T sqr(const T &val){ return val*val; }
+
+template<typename T>
+inline T cube(const T &val){ return val*val*val; }
 
 template <typename T>
 inline int sgn(T &val) {return (T(0) < val) - (val < T(0)); }
@@ -106,6 +111,14 @@ inline VecXd sabs(const VecXd &vec, const VecXd &p)
   //Differentiable "soft" absolute value function
   VecXd sum = elem_sqrt(elem_square(vec)+elem_square(p));
   return sum - p;
+}
+
+inline void push_back(VecXd &vec, const double &val){
+  //push_back to Eigen vector.
+  //Don't do this too much, since it'll be really slow!
+  int old_length = vec.size();
+  vec.resize(old_length+1);
+  vec(old_length) = val;
 }
 
 #endif

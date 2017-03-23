@@ -1,23 +1,45 @@
-#include "standardIncludes.h"
-#include "acrobot.h"
-#include <fstream>
+#include "loco_car.h"
 
-using namespace std;
-using namespace Eigen;
+int main(){
+	  LocoCar car;
 
-int main()
-{
-  int K = 500; // length of trajectory
-  Acrobot acrobot;
-  acrobot.init();
-  Vector4d startState(0,0,0,0); // angle 0,1, angular vel 0,1
-  Vector4d endState(pi,0,0,0);  // raised vertically above the pivot
-  acrobot.generateFeedbackController(startState, endState, K, 1); // generates trajectory xs
+		VecXd x0(6);
+		x0 << 0, 0, 0, 2, 0, 0;
+		VecXd x_d(6);
+		x_d << 3, 3, 0, 0, 0, 0;
+		VecXd obs(2);
+		obs << 3, 3;
+		car.obs = obs;
+		car.x_d = x_d;
 
-  ofstream ofs("acrobottrajectory.txt", ios::out);
-  for (int k = 0; k<K; k++)
-  {
-    ofs << acrobot.xs[k][0] << ", " << acrobot.xs[k][1] << endl;
-  }
-  return 1;
+		int T = 50;
+
+		VecOfVecXd u0;
+		Vec2d u_init(1, 0.3);
+		for (int i=0; i<T; i++){
+			u0.push_back(u_init);
+		}
+
+		car.u0 = u0;
+		car.init_traj(x0,u0);
+		// car.demoQP();
+		car.generate_trajectory(x0, x_d, T);
 }
+
+//   VecXd x(6);
+//   x << 1,2,3,1,2,3;
+//   Vec2d u(1,1);
+//   VecXd dx(6);
+//   dx = loco.dynamics(x,u);
+//   print_vec(dx);
+//   std::cout << "Should be: \n -1.2722, -1.8389, 3.0000, 8.0671, -5.7746, 2.9479\n";
+
+// VecXd x(8);
+// x << 1, 2, 3, 1, 2, 3, 0.1, 0.5;
+// VecXd u(2);
+// u << 1, 0.5;
+
+
+// VecXd x1;
+// double c = car.get_nextstate_and_cost(x, u, x1);
+// std::cout << x1 << '\n' << "cost: " << c << '\n';

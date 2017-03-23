@@ -1,17 +1,20 @@
-#include "iLQR2.h"
+#include "iLQR.h"
 
 #define eps 0.01
 
-// This has a weird condition based on number of outputs in MATLAB code
-// Split into two functions
-double iLQR::get_dynamics_and_cost(const VecXd &x, const VecXd u, VecXd &x1)
+// This has a weird condition based on number of outputs in MATLAB code. I split it into two functions
+double iLQR::get_nextstate_and_cost(const VecXd &x, const VecXd u, VecXd &x1)
 {
-	// returns cost, modifies dx
-		x1 = dynamics(x,u);
+	// returns cost, modifies next state x1
+		VecXd dx = dynamics(x,u);
+    x1 = x + timeDelta*dx;
+
 		double c = cost(x,u);
 		return c;
 }
 
+
+// Given a trajectory {x(t),u(t)} from forward pass, compute deriviatives along it
 void iLQR::compute_derivatives(const VecOfVecXd &x, const VecOfVecXd &u, VecOfMatXd &fx,
 												 VecOfMatXd &fu, VecOfVecXd &cx, VecOfVecXd &cu,
 												 VecOfMatXd &cxx, VecOfMatXd &cxu, VecOfMatXd &cuu)
