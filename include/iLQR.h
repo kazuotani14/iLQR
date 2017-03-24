@@ -89,8 +89,9 @@ public:
   double init_traj(VecXd &x_0, VecOfVecXd &u0);
   void generate_trajectory(const VecXd &x_0, int trajectoryLength);
 
-  // Tester functions. Call these to test functionality 
+  // Tester functions. Call these to test functionality
   void demoQP();
+  void output_to_csv();
 
 };
 

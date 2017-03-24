@@ -28,6 +28,17 @@ VecOfVecXd iLQR::adjust_u(VecOfVecXd &u, VecOfVecXd &l, double alpha)
 	return new_u;
 }
 
+void iLQR::output_to_csv()
+{
+	FILE *XU = fopen("XU.csv", "w");
+	for(int t=0; t<T; t++) {
+			fprintf(XU, "%f, %f, %f, %f, %f, %f, ",
+									xs[t](0), xs[t](1), xs[t](2), xs[t](3), xs[t](4), xs[t](5));
+			fprintf(XU, "%f, %f \n", us[t](0), us[t](1));
+	}
+	fclose(XU);
+}
+
 // double iLQR::get_gradient_norm(VecOfVecXd l, VecOfVecXd u)
 // {
 // 	for (int i=0; i<l.size())
@@ -180,7 +191,7 @@ void iLQR::generate_trajectory(const VecXd &x_0, const int trajectoryLength)
 		// std::cout << "Finished step 3 : forward pass. \n";
 	  double t_3 = (std::clock() - start) / (double)(CLOCKS_PER_SEC);
 
-		// std::cout << "Step times: " << t_1 << ' ' << t_2 << ' ' << t_3 << '\n';
+		std::cout << "Step times: " << t_1 << ' ' << t_2 << ' ' << t_3 << '\n';
 	//--------------------------------------------------------------------------
 	// STEP 4: accept step (or not), print status
 	 	if (iter==0)
@@ -225,7 +236,7 @@ void iLQR::generate_trajectory(const VecXd &x_0, const int trajectoryLength)
 	//
 	if (iter==maxIter)
 	 		std::cout << "\nEXIT: Maximum iterations reached.\n";
-	//
-	// TODO print/output final stuff
+
+	output_to_csv();
 
 } //generate_trajectory

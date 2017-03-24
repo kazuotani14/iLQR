@@ -13,6 +13,7 @@ TODO
 	- check for termination due to small gradient
 
 Validate inputs/outputs against matlab individually:
+- costs (also look for ways to make this faster)
 - compute_derivatives
 - forward_pass
 - backward_pass

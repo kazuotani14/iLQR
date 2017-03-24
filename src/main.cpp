@@ -7,7 +7,7 @@ int main(){
 		x0 << 0, 0, 0, 2, 0, 0;
 		 //x0 << 0.1, 0, 0, 1.94, 0.05232, 0.559;
 		VecXd x_d(6);
-		x_d << 3, 0, 0, 0, 0, 0;
+		x_d << 1, 1, 0, 0, 0, 0;
 		VecXd obs(2);
 		obs << 1, 0;
 		car.obs = obs;
@@ -27,6 +27,7 @@ int main(){
 
 		car.init_traj(x0,u0);
 		car.generate_trajectory(x0, T);
+		car.output_to_csv();
 
 		double time_elapsed = (std::clock() - start) / (double)(CLOCKS_PER_SEC);
 		std::cout << "Took " << time_elapsed << " seconds.\n";
