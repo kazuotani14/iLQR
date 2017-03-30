@@ -6,9 +6,7 @@ Figure out where to put past inputs.
 
 Stuff to do (in approximate order)
 
--------------
 TODO
->>>>>>> b889efe... slightly organized code
 - step 2~4 in iLQR_core
 	- check for termination due to small gradient
 

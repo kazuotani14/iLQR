@@ -88,3 +88,4 @@
 /Debug/Makefile
 /Debug/cmake_install.cmake
 /Debug/run_iLQR
+build/*
