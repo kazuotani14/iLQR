@@ -1,6 +1,10 @@
 ### TO-DO
 
-* Validate inputs/outputs against matlab individually:
+* Test individual functions
+* Separate dynamics - make dynamics base class
+	* make point mass dynamics
+
+* Test inputs/output:
 	* costs (also look for ways to make this faster)
 	* compute_derivatives
     * forward_pass
@@ -12,20 +16,25 @@
 
 - integrate cost for change in control input
 
+* Replace timing with chrono
+* Apparently std::function has some overhead - test alternatives
+* move to using Eigen::Ref
+
 - write final control sequence and states to text file
+	- python script for plotting
 - test whole thing and see if output looks reasonable - plot in matlab
 
 _Make stuff faster_
 
 1. calculate_derivatives : this is taking most of the time
-	- store auxiliary variables
-	- change incrementing method?
-	- take analytic derivatives from DDP-generator
+	* store auxiliary variables
+	* change incrementing method?
+	* take analytic derivatives from DDP-generator
 
 2. backward_pass
 
 3. forward_pass
-	- vectorize for parallel line search?
+	* vectorize for parallel line search?
 
 _Later_
 

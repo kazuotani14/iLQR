@@ -2,15 +2,21 @@
 #define _STANDARD_INCLUDES_H_
 
 #include <vector>
-#include <eigen/Eigen/Core>
-#include <eigen/Eigen/Eigenvalues>
-#include <eigen/Eigen/StdVector>
+#include "eigen/Eigen/Core"
+#include "eigen/Eigen/Eigenvalues"
+#include "eigen/Eigen/StdVector"
 #include <iostream>
+#include <cstdio>
 #include <math.h>
 #include <time.h>
+#include <ctime>
 #define EIGEN_USE_NEW_STDVECTOR
 
 #define Eye2 Eigen::Matrix2d::Identity(2,2);
+
+using Eigen::Vector2d;
+using Eigen::VectorXd;
+using Eigen::MatrixXd;
 
 typedef Eigen::Vector2d Vec2d;
 typedef Eigen::VectorXd VecXd;
@@ -46,7 +52,7 @@ inline double sabs(double x, double y)
 template<typename T>
 inline T Mod(T x, T y)
 {
-    static_assert(!std::numeric_limits<T>::is_exact , "Mod: floating-point type expected");
+    //static_assert(!std::numeric_limits<T>::is_exact , "Mod: floating-point type expected");
 
     if (0. == y)
         return x;
@@ -91,37 +97,21 @@ inline double wrap_to_pi(double angle)
 // Eigen-specific helper functions
 //---------------------------------
 
-template <typename T>
-inline void print_vec(T vec){
-  for (int i=0; i<vec.size(); i++){
-    std::cout << vec(i) << ' ';
-  }
-  std::cout << '\n';
-}
-
-inline VecXd elem_square(const VecXd &vec)
+inline VectorXd elem_square(const VectorXd &vec)
 {
   return vec.array().square().matrix();
 }
 
-inline VecXd elem_sqrt(const VecXd &vec)
+inline VectorXd elem_sqrt(const VectorXd &vec)
 {
   return vec.array().sqrt().matrix();
 }
 
-inline VecXd sabs(const VecXd &vec, const VecXd &p)
+inline VectorXd sabs(const VectorXd &vec, const VectorXd &p)
 {
   //Differentiable "soft" absolute value function
   VecXd sum = elem_sqrt(elem_square(vec)+elem_square(p));
   return sum - p;
-}
-
-inline void push_back(VecXd &vec, const double &val){
-  //push_back to Eigen vector.
-  //Don't do this too much, since it'll be really slow!
-  int old_length = vec.size();
-  vec.resize(old_length+1);
-  vec(old_length) = val;
 }
 
 #endif
