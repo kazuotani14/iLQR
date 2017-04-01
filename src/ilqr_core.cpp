@@ -119,20 +119,21 @@ void iLQR::generate_trajectory()
 			compute_derivatives(xs,us, fx,fu,cx,cu,cxx,cxu,cuu);
 			flgChange = 0;
 		}
+		#ifdef VERBOSE
+			std::cout << "Finished step 1 : compute derivatives. \n";
+		#endif
+
+
 
 	} // end top-level for-loop
 
 	std::cout << "end of generate_trajectory" << std::endl;
-}
 
 //
 
-// 		// std::cout << "Finished step 1 : compute derivatives. \n";
-// 		double t_1 = (std::clock() - start) / (double)(CLOCKS_PER_SEC);
 //
 // 		//--------------------------------------------------------------------------
 // 		// STEP 2: Backward pass, compute optimal control law and cost-to-go
-// 		start = std::clock();
 //
 // 		bool backPassDone = false;
 // 		while (!backPassDone)
@@ -159,12 +160,9 @@ void iLQR::generate_trajectory()
 // 		// double gnorm = get_gradient_norm(l, u);
 //
 // 		// std::cout << "Finished step 2 : backward pass. \n";
-//
-// 		double t_2 = (std::clock() - start) / (double)(CLOCKS_PER_SEC);
-//
+////
 // 		//--------------------------------------------------------------------------
 // 		// STEP 3: Forward pass / line-search to find new control sequence, trajectory, cost
-// 		start = std::clock();
 //
 // 		bool fwdPassDone = 0;
 // 		VecOfVecXd xnew(trajectoryLength+1);
@@ -203,9 +201,7 @@ void iLQR::generate_trajectory()
 // 		}
 //
 // 		// std::cout << "Finished step 3 : forward pass. \n";
-// 	  double t_3 = (std::clock() - start) / (double)(CLOCKS_PER_SEC);
 //
-// 		std::cout << "Step times: " << t_1 << ' ' << t_2 << ' ' << t_3 << '\n';
 // 	//--------------------------------------------------------------------------
 // 	// STEP 4: accept step (or not), print status
 // 		#ifdef VERBOSE
@@ -265,4 +261,4 @@ void iLQR::generate_trajectory()
 //
 // 	// output_to_csv();
 //
-// } //generate_trajectory
+} //generate_trajectory
