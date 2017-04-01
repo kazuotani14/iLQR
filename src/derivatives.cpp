@@ -49,63 +49,56 @@ void iLQR::get_cost_derivatives(const VecOfVecXd &x, const VecOfVecXd &u,
   }
 }
 
+// TODO figure out how to redue repituition
 void iLQR::get_cost_2nd_derivatives(const VecOfVecXd &x, const VecOfVecXd &u,
                               VecOfMatXd &cxx, VecOfMatXd &cxu, VecOfMatXd &cuu)
 {
+  int n = x[0].size();
+  int m = u[0].size();
+
+  VecXd pp, pm, mp, mm; //plus-plus, plus-minus, ....
+  std::function<double(VectorXd, VectorXd)> c = [this](VectorXd x_v, VectorXd u_v){return model->cost(x_v,u_v);};
+
   for (int t=0; t<T; t++)
   {
-    VectorXd xi = x[t];
-    VectorXd ui = u[t];
+    cxx[t].resize(n,n);
+    cxu[t].resize(n,m);
+    cuu[t].resize(m,m);
 
-
-
+    //cxx
+    for (int i=0; i<n; i++){
+      for (int j=i; j<n; j++){
+        pp = pm = mp = mm = x[t];
+        pp(i) = pm(i) += eps;
+        mp(i) = mm(i) -= eps;
+        pp(j) = mp(j) += eps;
+        pm(j) = mm(j) -= eps;
+        cxx[t](i,j) = cxx[t](j,i) = (c(pp, u[t]) - c(mp, u[t]) - c(pm, u[t]) + c(mm, u[t])) / (4*sqr(eps));
+      }
+    }
+    //cxu
+    VecXd px, mx, pu, mu;
+    for (int i=0; i<n; i++){
+      for (int j=0; j<m; j++){
+        px = mx = x[t];
+        pu = mu = u[t];
+        px(i) += eps;
+        mx(i) -= eps;
+        pu(j) += eps;
+        mu(j) -= eps;
+        cxu[t](i,j) = (c(px, pu) - c(mx, pu) - c(px, mu) + c(mx, mu)) / (4*sqr(eps));
+      }
+    }
+    //cuu
+    for (int i=0; i<m; i++){
+      for (int j=i; j<m; j++){
+        pp = pm = mp = mm = u[t];
+        pp(i) = pm(i) += eps;
+        mp(i) = mm(i) -= eps;
+        pp(j) = mp(j) += eps;
+        pm(j) = mm(j) -= eps;
+        cuu[t](i,j) = cuu[t](j,i) = (c(x[t], pp) - c(x[t], mp) - c(x[t], pm) + c(x[t], mm)) / (4*sqr(eps));
+      }
+    }
   }
 }
-//
-//     //TODO remove repetition
-//
-//     VecXd pp, pm, mp, mm; //plus-plus, plus-minus, ....
-//
-//     //cxx
-//     for (int i=0; i<n; i++){
-//       for (int j=i; j<n; j++){
-//         pp = pm = mp = mm = x[t];
-//         pp(i) = pm(i) += eps;
-//         mp(i) = mm(i) -= eps;
-//         pp(j) = mp(j) += eps;
-//         pm(j) = mm(j) -= eps;
-//         cxx[t](i,j) = cxx[t](j,i) = (cost(pp, u[t]) - cost(mp, u[t]) - cost(pm, u[t]) + cost(mm, u[t])) / (4*sqr(eps));
-//       }
-//     }
-//     //cxu
-//     VecXd px, mx, pu, mu;
-//     for (int i=0; i<n; i++){
-//       for (int j=0; j<m; j++){
-//         px = mx = x[t];
-//         pu = mu = u[t];
-//         px(i) += eps;
-//         mx(i) -= eps;
-//         pu(j) += eps;
-//         mu(j) -= eps;
-//         cxu[t](i,j) = (cost(px, pu) - cost(mx, pu) - cost(px, mu) + cost(mx, mu)) / (4*sqr(eps));
-//       }
-//     }
-//     //cuu
-//     for (int i=0; i<m; i++){
-//       for (int j=i; j<m; j++){
-//         pp = pm = mp = mm = u[t];
-//         pp(i) = pm(i) += eps;
-//         mp(i) = mm(i) -= eps;
-//         pp(j) = mp(j) += eps;
-//         pm(j) = mm(j) -= eps;
-//         cuu[t](i,j) = cuu[t](j,i) = (cost(x[t], pp) - cost(x[t], mp) - cost(x[t], pm) + cost(x[t], mm)) / (4*sqr(eps));
-//       }
-//     }
-//
-//     // std::cout << t << '\n';
-//     // std::cout << "cxx[t]: \n" << cxx[t] << '\n';
-//     // std::cout << "cxu[t]: \n" << cxu[t] << '\n';
-//     // std::cout << "cuu[t]: \n" << cuu[t] << '\n';
-//     // getchar();
-//   }
-// } //get_cost_2nd_derivatives
