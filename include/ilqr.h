@@ -7,6 +7,8 @@
 #include "model.h"
 #include "boxqp.h"
 #include <memory>
+#include <algorithm>
+#include <numeric>
 
 static const int maxIter = 10;
 static const double tolFun = 1e-6;
@@ -78,10 +80,9 @@ private:
 
 
   double forward_pass(const VectorXd& x0, const VecOfVecXd& u);
-  double forward_pass(const VectorXd& x0, const VecOfVecXd& u,
-  									const VecOfVecXd& x, const VecOfMatXd& L);
   int backward_pass();
   VecOfVecXd adjust_u(VecOfVecXd &u, VecOfVecXd &l, double alpha);
+  double get_gradient_norm(const VecOfVecXd& l, const VecOfVecXd& u);
 
   // Given a trajectory {x(t),u(t)} from forward pass, compute deriviatives along it
   void compute_derivatives(const VecOfVecXd &x, const VecOfVecXd &u);

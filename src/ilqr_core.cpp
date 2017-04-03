@@ -1,7 +1,8 @@
 #include "ilqr.h"
 #include "double_integrator.h"
 
-#define VERBOSE
+#define SHOWPROGRESS
+// #define VERBOSE
 
 double iLQR::init_traj(VectorXd &x_0, VecOfVecXd &u0)
 {
@@ -64,10 +65,10 @@ void iLQR::generate_trajectory()
 	bool flgChange = true;
 	bool stop = false;
 	double dcost = 0;
-	double new_cost;
 	double z = 0;
 	double expected = 0;
 	int diverge = 0;
+	double new_cost, gnorm;
 
 	#ifdef VERBOSE
 		std::cout << "\n=========== begin iLQG ===========\n";
@@ -93,8 +94,9 @@ void iLQR::generate_trajectory()
 			flgChange = 0;
 		}
 		#ifdef VERBOSE
-			std::cout << "Finished step 1 : compute derivatives. \n";
+			cout << "Finished step 1 : compute derivatives." << endl;;
 		#endif
+
 
 		// for(const auto& i : cx) print_eigen("cx", i);
 		// for(const auto& i : us) print_eigen("us", i);
@@ -127,13 +129,15 @@ void iLQR::generate_trajectory()
 			backPassDone = true;
 		}
 
-		// for(const auto& ki : k) print_eigen("ki", ki);
-		// for(const auto& Ki : K) print_eigen("Ki", Ki);
-		// getchar();
-
-		// TODO check for termination due to small gradient
-		// double gnorm = get_gradient_norm(l, u);
-		double gnorm = 0;
+		// check for termination due to small gradient
+		gnorm = get_gradient_norm(k, us);
+		if (gnorm < tolGrad && lambda < 1e-5)
+		{
+			#ifdef SHOWPROGRESS
+				cout << "\nSUCCESS: gradient norm < tolGrad\n" << endl;
+			#endif
+			break;
+		}
 
 		#ifdef VERBOSE
 			std::cout << "Finished step 2 : backward pass. \n";
@@ -147,15 +151,20 @@ void iLQR::generate_trajectory()
 		VecOfVecXd unew(T);
 		double alpha;
 
+		// for(const auto& ki : k) print_eigen("ki", ki);
+		// for(const auto& Ki : K) print_eigen("Ki", Ki);
+		// getchar();
+
 		if (backPassDone) //  serial backtracking line-search
 		{
 			for (int i=0; i<Alpha.size(); i++)
 			{
 				alpha = Alpha(i);
 				VecOfVecXd u_plus_feedforward = adjust_u(us, k, alpha);
-				// for(const auto& ui : u_plus_feedforward) print_eigen("u_ff", ui);
+
 				new_cost = forward_pass(x0, u_plus_feedforward);
 				dcost    = cost_s - new_cost;
+				expected = -alpha * (dV(0) + alpha*dV(1));
 
 				if (expected>0)
 				{
@@ -173,9 +182,9 @@ void iLQR::generate_trajectory()
 				// cout << "old cost: " << cost_s << endl;;
 				// cout << "new_cost: " << new_cost << endl;;
 				// cout << "dcost: " << dcost << endl;
-				// expected = -alpha * (dV(0) + alpha*dV(1));
 				// cout << "expected: " << expected << endl;
 				// print_eigen("dV", dV);
+				// for(const auto& ui : us) print_eigen("u_out", ui);
 				// cout << "z: " << z << endl;
 				// getchar();
 
@@ -195,19 +204,21 @@ void iLQR::generate_trajectory()
 			}
 		}
 
-		std::cout << "Finished step 3 : forward pass. \n";
+		#ifdef VERBOSE
+			cout << "Finished step 3 : forward pass." <<endl;
+		#endif
 
 		//--------------------------------------------------------------------------
 		// STEP 4: accept step (or not), print status
-		#ifdef VERBOSE
+		#ifdef SHOWPROGRESS
 			if (iter==0)
-	 		std::cout << "iteration\tcost\t\treduction\texpected\tgradient\tlog10(lambda)\n";
+	 		std::cout << "iteration\tcost\t\treduction\texpect\t\tgrad\t\tlog10(lambda)\n";
 		#endif
 
 	 	if (fwdPassDone)
 	 	{
-			#ifdef VERBOSE
-				printf("%-12d\t%-12.6g\t%-12.3g\t%-12.3g\t%-12.3g\t%-12.1f\n",
+			#ifdef SHOWPROGRESS
+				printf("%-12d\t%-12.3g\t%-12.3g\t%-12.3g\t%-12.3g\t%-12.1f\n",
 	                iter, new_cost, dcost, expected, gnorm, log10(lambda));
 			#endif
 
@@ -223,7 +234,7 @@ void iLQR::generate_trajectory()
 	 		//terminate?
 	 		if (dcost < tolFun)
 			{
-				#ifdef VERBOSE
+				#ifdef SHOWPROGRESS
 		 			std::cout << "\nSUCCESS: cost change < tolFun\n";
 				#endif
 	 			break;
@@ -238,30 +249,29 @@ void iLQR::generate_trajectory()
 	 		dlambda  = std::max(dlambda * lambdaFactor, lambdaFactor);
 	 		lambda   = std::max(lambda * dlambda, lambdaMin);
 
-			#ifdef VERBOSE
+			#ifdef SHOWPROGRESS
 				printf("%-12d\t%-12s\t%-12.3g\t%-12.3g\t%-12.3g\t%-12.1f\n",
 	                iter,"NO STEP", dcost, expected, gnorm, log10(lambda));
 			#endif
 
 	 		// terminate?
 	 		if (lambda > lambdaMax){
-				#ifdef VERBOSE
+				#ifdef SHOWPROGRESS
 	 				std::cout << "\nEXIT: lambda > lambdaMax\n";
 				#endif
 	 			break;
 	 		}
 		}
 
-		#ifdef VERBOSE
+		#ifdef SHOWPROGRESS
 			if (iter==maxIter) std::cout << "\nEXIT: Maximum iterations reached.\n";
 		#endif
-		//
-		// output_to_csv();
 
 	} // end top-level for-loop
-	forward_pass(x0, us);
-	for(const auto& xi: xs) print_eigen("x", xi);
-	for(const auto& ui: us) print_eigen("u", ui); 
+
+	output_to_csv();
+	// for(const auto& xi: xs) print_eigen("x", xi);
+	// for(const auto& ui: us) print_eigen("u", ui);
 
 } //generate_trajectory
 
@@ -276,22 +286,41 @@ VecOfVecXd iLQR::adjust_u(VecOfVecXd &u, VecOfVecXd &l, double alpha)
 	return new_u;
 }
 
-// double iLQR::get_gradient_norm(VecOfVecXd l, VecOfVecXd u)
-// {
-// 	for (int i=0; i<l.size())
-// }
-
+// Replaces this line from matlab: g_norm = mean(max(abs(l) ./ (abs(u)+1), [], 1));
+double iLQR::get_gradient_norm(const VecOfVecXd& l, const VecOfVecXd& u)
+{
+	std::vector<double> vals(l.size());
+	for (int i=0; i<l.size(); i++)
+	{
+		VectorXd v = l[i].cwiseAbs().array() / (u[i].cwiseAbs().array() + 1);
+		double max_val = v.maxCoeff();
+		vals[i] = max_val;
+	}
+	double average = std::accumulate(vals.begin(), vals.end(), 0.0)/vals.size();
+	return average;
+}
 
 void iLQR::output_to_csv()
 {
 	FILE *XU = fopen("XU.csv", "w");
+
+	for(int i=1; i<=xs[0].size(); i++)
+		fprintf(XU, "x%d, ", i);
+	for(int j=0; j<us[0].size(); j++)
+		fprintf(XU, "u%d, ", j);
+	fprintf(XU, "u%d\n", int(us[0].size()));
+
 	for(int t=0; t<T; t++)
 	{
 		for(int i=0; i<xs[t].size(); i++)
 			fprintf(XU, "%f, ", xs[t](i));
-		for(int j=0; j<us[t].size(); j++)
+		for(int j=0; j<us[t].size()-1; j++)
 			fprintf(XU, "%f, ", us[t](j));
-		fprintf(XU, "\n");
+		fprintf(XU, "%f\n", us[t](us[t].size()-1));
 	}
+
+	for(int i=0; i<xs[T].size(); i++)
+		fprintf(XU, "%f, ", xs[T](i));
+
 	fclose(XU);
 }

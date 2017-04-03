@@ -1,21 +1,10 @@
 ### TO-DO
 
-* Test:
-    * backward_pass - check against matlab code
-	    * figure out why cu differs starting from iteration 2
-	    * Finish this and we're pretty much done!
-
-* step 2 in iLQR_core
-	* check for termination due to small gradient
-		* the way they do it in matlab looks complicated - is there an easier way?
-
 * read paper, understand algorithm
 * remove error codes - use enums?
 
 * make one file that runs all unit tests
-* test whole thing and see if output looks reasonable - plot
-	* write final control sequence and states to csv file
-	* python script for plotting
+* python script for plotting
 
 _Make stuff faster_
 
@@ -32,11 +21,14 @@ _Make stuff faster_
 
 _Later_
 
-* Apparently std::function has some overhead - test alternatives
-* move to using Eigen::Ref
+* namespace
+* change layout of standard includes
 * helper functions are all inline right now - move these to separate file?
+* move to using Eigen::Ref
+* Apparently std::function has some overhead - test alternatives
 * integrate cost for change in control input
 
+* Test for back-pass, based on linear system?
 * add docs, short explanation of algorithm?
 
 ### Misc
