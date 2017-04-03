@@ -1,8 +1,0 @@
-/Users/Kazu/Code/ilqr/test/CMakeFiles/gtest_test.dir
-/Users/Kazu/Code/ilqr/test/CMakeFiles/edit_cache.dir
-/Users/Kazu/Code/ilqr/test/CMakeFiles/rebuild_cache.dir
-/Users/Kazu/Code/ilqr/test/CMakeFiles/double_int_test.dir
-/Users/Kazu/Code/ilqr/test/CMakeFiles/deriv_test.dir
-/Users/Kazu/Code/ilqr/test/CMakeFiles/gtest.dir
-/Users/Kazu/Code/ilqr/test/CMakeFiles/boxqp_test.dir
-/Users/Kazu/Code/ilqr/test/CMakeFiles/run_iLQR.dir

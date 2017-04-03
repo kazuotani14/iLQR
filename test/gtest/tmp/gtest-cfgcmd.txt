@@ -1,1 +1,0 @@
-cmd='/Users/Kazu/anaconda/bin/cmake;-GUnix Makefiles;/Users/Kazu/Code/ilqr/test/gtest/src/gtest'
