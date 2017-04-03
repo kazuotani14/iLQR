@@ -1,13 +1,13 @@
 #ifndef _ILQR_H_
 #define _ILQR_H_
 
-#include "gtest/gtest_prod.h"
 #include "common.h"
-
 #include "model.h"
 #include "boxqp.h"
 #include <memory>
 #include <numeric>
+
+#include "gtest/gtest_prod.h"
 
 static const int maxIter = 10;
 static const double tolFun = 1e-6;
@@ -41,11 +41,6 @@ public:
   void output_to_csv(const std::string filename);
 
 private:
-  FRIEND_TEST(ILQRSetup, dDynamicsTest);
-  FRIEND_TEST(ILQRSetup, dCostTest);
-  FRIEND_TEST(ILQRSetup, ddCostTest);
-  FRIEND_TEST(ILQRSetup, ForwardPassTest);
-
   int T;  // number of state transitions
   double dt;
 
@@ -82,6 +77,11 @@ private:
   void get_dynamics_derivatives(const VecOfVecXd &x, const VecOfVecXd &u);
   void get_cost_derivatives(const VecOfVecXd &x, const VecOfVecXd &u);
   void get_cost_2nd_derivatives(const VecOfVecXd &x, const VecOfVecXd &u);
+
+  FRIEND_TEST(ILQRSetup, dDynamicsTest);
+  FRIEND_TEST(ILQRSetup, dCostTest);
+  FRIEND_TEST(ILQRSetup, ddCostTest);
+  FRIEND_TEST(ILQRSetup, ForwardPassTest);
 };
 
 #endif

@@ -93,7 +93,7 @@ endmacro(add_gtest)
 
 add_gtest(gtest_test "test/test_gtest.cpp")
 
-add_gtest(deriv_test "test/test_derivatives.cpp" "src/finite_diff.cpp")
+add_gtest(deriv_test "test/test_finite_diff.cpp" "src/finite_diff.cpp")
 add_gtest(boxqp_test "test/test_boxqp.cpp" "src/boxqp.cpp" "src/eigen_helpers.cpp")
 add_gtest(double_int_test "test/test_doubleintegrator.cpp" "src/double_integrator.cpp")
 add_gtest(ilqr_deriv_test "test/test_ilqr_derivatives.cpp" ${ILQR_SOURCES})

@@ -32,6 +32,14 @@ TEST(FiniteDiffTest, Vec2Vec)
   EXPECT_TRUE(dx.isApprox(MatrixXd::Identity(2,2), eq_tol));
 }
 
+TEST(FiniteDiffTest, LargeProblem)
+{
+  std::function<VectorXd(VectorXd)> f = [](VectorXd v){return (v.array()*3).matrix();};
+  VectorXd vec(1000);
+  vec.setOnes();
+  MatrixXd dx = finite_diff_vec2vec(f, vec, 1000);
+}
+
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
