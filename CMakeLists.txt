@@ -85,15 +85,17 @@ include_directories("${source_dir}/googletest/include"
 
 # TODO add optional arguments
 macro(add_gtest exec_name filepath)
-    add_executable(${exec_name} ${filepath})
+    set(OtherFiles ${ARGN})
+    add_executable(${exec_name} ${filepath} ${OtherFiles})
     target_link_libraries(${exec_name} libgtest libgmock)
 endmacro(add_gtest)
 
-add_gtest(test_gtest "test/test_gtest.cpp")
+add_gtest(gtest_test "test/test_gtest.cpp")
 
-add_executable(deriv "test/test_derivatives.cpp" "src/finite_diff.cpp")
-target_link_libraries(deriv libgtest libgmock)
-add_executable(boxqp "test/test_boxqp.cpp" "src/boxqp.cpp" "src/eigen_helpers.cpp")
-target_link_libraries(boxqp libgtest libgmock)
-add_executable(double_int "test/test_doubleintegrator.cpp" "src/double_integrator.cpp")
-target_link_libraries(double_int libgtest libgmock)
+add_gtest(deriv_test "test/test_derivatives.cpp" "src/finite_diff.cpp")
+# add_executable(deriv_test "test/test_derivatives.cpp" "src/finite_diff.cpp")
+# target_link_libraries(deriv_test libgtest libgmock)
+add_executable(boxqp_test "test/test_boxqp.cpp" "src/boxqp.cpp" "src/eigen_helpers.cpp")
+target_link_libraries(boxqp_test libgtest libgmock)
+add_executable(double_int_test "test/test_doubleintegrator.cpp" "src/double_integrator.cpp")
+target_link_libraries(double_int_test libgtest libgmock)
