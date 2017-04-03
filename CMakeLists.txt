@@ -1,13 +1,12 @@
 cmake_minimum_required(VERSION 3.5.0)
 project (iLQR)
 
-set (CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_FLAGS "-O3 -Wall -Wextra")
 
 ###
 # My stuff
 ###
-
-# `cmake -DCMAKE_BUILD_TYPE=Debug ..` to compile with debug flags
 
 # file(GLOB_RECURSE Foo_SOURCES "src/*.cpp")
 
@@ -84,7 +83,6 @@ include_directories("${source_dir}/googletest/include"
 # My tests
 ###
 
-# TODO add optional arguments
 macro(add_gtest exec_name filepath)
     set(OtherFiles ${ARGN})
     add_executable(${exec_name} ${filepath} ${OtherFiles})

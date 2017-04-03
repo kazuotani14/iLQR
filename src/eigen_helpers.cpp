@@ -1,18 +1,15 @@
 #include "eigen_helpers.h"
 
 // Extracts elements of vec for which indices is non-zero
-// TODO find better way to do this
 VectorXd subvec_w_ind(const VectorXd& vec, const VectorXd& indices)
 {
 	assert(vec.size() == indices.size());
 	std::vector<double> vals;
-
 	for(int i=0; i<vec.size(); i++){
 		if(indices(i)>0){
 			vals.push_back(vec(i));
 		}
 	}
-
 	Eigen::Map<VectorXd> subvec(vals.data(), vals.size());
 	return subvec;
 }

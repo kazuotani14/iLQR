@@ -4,8 +4,10 @@
 #include "common.h"
 #include "model.h"
 #include "boxqp.h"
+
 #include <memory>
 #include <numeric>
+#include <stdexcept>
 
 #include "gtest/gtest_prod.h"
 
@@ -26,28 +28,29 @@ static Eigen::Map<VectorXd> Alpha(alpha_vec.data(), alpha_vec.size());
 class iLQR
 {
 public:
-  iLQR(Model* p_dyn, double timeDelta, int timesteps): dt(timeDelta), T(timesteps)
+  iLQR(Model* p_dyn, double timeDelta): dt(timeDelta)
   {
     model.reset(p_dyn);
   }
   iLQR() = default;
 
   std::shared_ptr<Model> model;
-  VectorXd x_d; // target state TODO use this
 
-  double init_traj(VectorXd &x_0, VecOfVecXd &u0);
   void generate_trajectory();
+  void generate_trajectory(const VectorXd &x_0); //warm-start
+  void generate_trajectory(const VectorXd &x_0, const VecOfVecXd &u0); //fresh start
 
   void output_to_csv(const std::string filename);
+  double init_traj(const VectorXd &x_0, const VecOfVecXd &u_0);
 
 private:
-  int T;  // number of state transitions
   double dt;
+  int T;  // number of state transitions
 
   VectorXd x0;
 
-  VecOfVecXd xs; // states from last trajectory
-  VecOfVecXd us; // controls from last trajectory
+  VecOfVecXd xs; // s: "step". current working sequence
+  VecOfVecXd us;
   VecOfVecXd ls;
   VecOfMatXd Ls;
   double cost_s;
@@ -86,6 +89,7 @@ private:
   void calculate_cxx(const VecOfVecXd &x, const VecOfVecXd &u, int start_T, int end_T);
   void calculate_cxu(const VecOfVecXd &x, const VecOfVecXd &u, int start_T, int end_T);
   void calculate_cuu(const VecOfVecXd &x, const VecOfVecXd &u, int start_T, int end_T);
+
   //multi-threaded version - about 2 to 3 times faster
   void get_cost_2nd_derivatives_mt(const VecOfVecXd &x, const VecOfVecXd &u, int n_threads_per);
 

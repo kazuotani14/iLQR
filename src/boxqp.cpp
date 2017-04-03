@@ -1,29 +1,27 @@
 #include "boxqp.h"
 
 /*
-	Minimize 0.5*x'*H*x + x'*g  s.t. lower<=x<=upper
+	Minimize 0.5*x'*Q*x + x'*c  s.t. lower<=x<=upper
 
 	 inputs:
-	    H            - positive definite matrix  (m * m)
-	    g            - bias vector         			 (m)
+	    Q            - positive definite matrix  (m * m)
+	    c            - bias vector         			 (m)
 	    x0           - initial state             (m)
 
-			lower        - lower bounds              (m)
+		lower        - lower bounds              (m)
 	    upper        - upper bounds              (m)
 
 	 outputs:
-	 		result       - result type (roughly, higher is better, see below)
+	 	result       - result type (roughly, higher is better, see below)
 	    x            - solution = k_i             (m)
 	    res.H_free        - subspace cholesky factor=R (n_free * n_free)
 	    res.v_free         - set of free dimensions     (m)
 											- vector of 0 or 1
 */
 
-// TODO rename (H,g) to (Q,c)
-
-double quadCost(const MatrixXd& H, const VectorXd& g, const VectorXd& x)
+double quadCost(const MatrixXd& Q, const VectorXd& c, const VectorXd& x)
 {
-	return 0.5*x.transpose()*H*x + x.dot(g);
+	return 0.5*x.transpose()*Q*x + x.dot(c);
 }
 
 VectorXd clamp_to_limits(const VectorXd &x, const VectorXd& lower, const VectorXd& upper)
@@ -36,17 +34,16 @@ VectorXd clamp_to_limits(const VectorXd &x, const VectorXd& lower, const VectorX
 	return x_clamped;
 }
 
-// TODO why not Newton method here?
 // Armijo line search: for quadratic cost function with limits on x
 // Find a step size in the given search direction that leads to at least the expected decrease in value
 lineSearchResult quadclamp_line_search(const VectorXd x0, const VectorXd search_dir,
-														 const MatrixXd H, const VectorXd g,
-														 const VectorXd lower, const VectorXd upper)
+									   const MatrixXd Q, const VectorXd c,
+									   const VectorXd lower, const VectorXd upper)
 {
 	double step = 1;
 	lineSearchResult res(x0.size());
 
-	VectorXd grad = H*x0 + g;
+	VectorXd grad = Q*x0 + c;
 	double local_slope = search_dir.dot(grad);
 	if(local_slope >= 0) // check if search direction isn't descent direction - this shoudn't happen
 	{
@@ -56,8 +53,8 @@ lineSearchResult quadclamp_line_search(const VectorXd x0, const VectorXd search_
 
 	VectorXd x_reach = x0 + step*search_dir;
 	VectorXd x_clamped = clamp_to_limits(x_reach, lower, upper);
-	double v = quadCost(H, g, x_clamped);
-	double old_v = quadCost(H, g, x0);
+	double v = quadCost(Q, c, x_clamped);
+	double old_v = quadCost(Q, c, x0);
 
 	while ((v - old_v)/(step*local_slope) < Armijo)
 	{
@@ -66,7 +63,7 @@ lineSearchResult quadclamp_line_search(const VectorXd x0, const VectorXd search_
 
 		x_reach = x0 + step*search_dir;
 		x_clamped = clamp_to_limits(x_reach, lower, upper);
-		v = quadCost(H, g, x_clamped);
+		v = quadCost(Q, c, x_clamped);
 
 		if (step < minStep)
 		{
@@ -81,24 +78,19 @@ lineSearchResult quadclamp_line_search(const VectorXd x0, const VectorXd search_
 }
 
 
-boxQPResult boxQP(const MatrixXd &H, const VectorXd &g, const VectorXd &x0,
+boxQPResult boxQP(const MatrixXd &Q, const VectorXd &c, const VectorXd &x0,
                   const VectorXd& lower, const VectorXd& upper)
 {
   int n_dims = x0.size();
-  assert(H.cols() == n_dims);
-  assert(H.rows() == n_dims);
-  assert(g.size() == n_dims);
+  assert(Q.cols() == n_dims);
+  assert(Q.rows() == n_dims);
+  assert(c.size() == n_dims);
   assert(lower.size() == n_dims);
   assert(upper.size() == n_dims);
 
   VectorXd x = clamp_to_limits(x0, lower, upper);
-  double val = x.transpose()*H*x + x.dot(g);
+  double val = x.transpose()*Q*x + x.dot(c);
   double oldvalue = 0;
-
-  // print_eigen("lower", lower);
-  // print_eigen("upper", upper);
-  // print_eigen("x0", x0);
-  // std::cout << "val: " << val << std::endl;
 
   int nfactors = 0;
   boxQPResult res(n_dims);
@@ -120,11 +112,8 @@ boxQPResult boxQP(const MatrixXd &H, const VectorXd &g, const VectorXd &x0,
       res.result = 4;
       break;
     }
-	VectorXd grad = H*x + g;
+	VectorXd grad = Q*x + c;
 	oldvalue = val;
-
-	// print_eigen("x", x);
-	// print_eigen("grad", grad);
 
     // Find clamped dimensions
     old_clamped_dims = clamped_dims;
@@ -132,20 +121,17 @@ boxQPResult boxQP(const MatrixXd &H, const VectorXd &g, const VectorXd &x0,
     res.v_free.setOnes();
     for (int i=0; i<n_dims; i++)
     {
-      if(std::abs(x(i)-lower(i))<1e-3 && grad(i)>0)
+      if(approx_eq(x(i), lower(i)) && grad(i)>0)
       {
         clamped_dims(i) = 1;
         res.v_free(i) = 0;
       }
-      else if(std::abs(x(i)-upper(i))<1e-3 && grad(i)<0) // TODO replace with approx_eq
+      else if(approx_eq(x(i), upper(i)) && grad(i)<0)
       {
         clamped_dims(i) = 1;
         res.v_free(i) = 0;
       }
     }
-
-	// print_eigen("clamped", clamped_dims);
-	// print_eigen("v_free", res.v_free);
 
     // Check if all dimensions are clamped
     if(clamped_dims.all())
@@ -158,34 +144,36 @@ boxQPResult boxQP(const MatrixXd &H, const VectorXd &g, const VectorXd &x0,
     if (iter==0 || (old_clamped_dims-clamped_dims).sum() != 0)
     {
       int n_free = res.v_free.sum();
-      MatrixXd Hf;
+      MatrixXd Qfree;
 
       // TODO remove this hard-coded check - this assumes inputs to boxQP will always be size 2!!
+	  // what we want is: Qfree = Q(v_free, v_	free)
       if (res.v_free[0] == 1)
       {
-        Hf = H.block(0, 0, n_free, n_free);
+        Qfree = Q.block(0, 0, n_free, n_free);
       }
       else
       {
-        Hf = H.block(1, 1, n_free, n_free);
+        Qfree = Q.block(1, 1, n_free, n_free);
       }
-      Eigen::LLT<MatrixXd> lltOfHf(Hf); // Cholesky decomposition
-	  if(lltOfHf.matrixL().size() > 0) // I don't know why this happens...
-      	res.H_free = lltOfHf.matrixL().transpose();
+
+      Eigen::LLT<MatrixXd> choleskyOfQfree(Qfree); // Cholesky decomposition
+	  if(choleskyOfQfree.matrixL().size() > 0) // I don't know why this happens...
+      	res.H_free = choleskyOfQfree.matrixL().transpose();
 
       nfactors++;
     }
 
     // Check if gradient norm is below threshold
     double grad_norm = grad.cwiseProduct(res.v_free).norm();
-	// std::cout << "grad_norm: " << grad_norm << std::endl;
-    if (grad_norm < minGrad){
+    if (grad_norm < minGrad)
+	{
       res.result = 5;
       break;
     }
 
     // get new search direction
-    VectorXd grad_clamped = H*(x.cwiseProduct(clamped_dims)) + g;
+    VectorXd grad_clamped = Q*(x.cwiseProduct(clamped_dims)) + c;
 
     VectorXd search = VectorXd::Zero(x.size());
 
@@ -200,7 +188,7 @@ boxQPResult boxQP(const MatrixXd &H, const VectorXd &g, const VectorXd &x0,
 		search(1) = (-res.H_free.inverse() * (res.H_free.transpose().inverse()*subvec_w_ind(grad_clamped, res.v_free)) - subvec_w_ind(x, res.v_free))(0);
 	}
 
-    lineSearchResult linesearch_res = quadclamp_line_search(x, search, H, g, lower, upper);
+    lineSearchResult linesearch_res = quadclamp_line_search(x, search, Q, c, lower, upper);
     if(linesearch_res.failed)
     {
         res.result = 2;
@@ -215,7 +203,6 @@ boxQPResult boxQP(const MatrixXd &H, const VectorXd &g, const VectorXd &x0,
     // accept candidate
 	x = linesearch_res.x_opt;
 	val = linesearch_res.v_opt;
-
   }
 
   res.x_opt = x;

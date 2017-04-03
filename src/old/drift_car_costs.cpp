@@ -1,7 +1,5 @@
 #include "drift_car.h"
 
-// TODO vectorize so we can do parallel line search. for now, do sequential
-
 double LocoCar::cost(const VecXd &x, const VecXd &u)
 {
   // Input: n=8 state vector(s). 6 states, 2 precalculated du

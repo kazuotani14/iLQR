@@ -4,7 +4,7 @@
 #define SHOWPROGRESS
 // #define VERBOSE
 
-double iLQR::init_traj(VectorXd &x_0, VecOfVecXd &u0)
+double iLQR::init_traj(const VectorXd &x_0, const VecOfVecXd &u_0)
 {
 	//initialize xs and us, return or store initial cost
 	xs.resize(T+1);
@@ -12,7 +12,7 @@ double iLQR::init_traj(VectorXd &x_0, VecOfVecXd &u0)
 	x0 = x_0;
 
 	// call forward_pass, get xs, us, cost
-	double cost_i = forward_pass(x0, u0);
+	double cost_i = forward_pass(x0, u_0);
 	std::cout << "Initial cost: " << cost_i << "\n";
 	cost_s = cost_i;
 
@@ -50,15 +50,35 @@ double iLQR::init_traj(VectorXd &x_0, VecOfVecXd &u0)
 	return cost_s;
 }
 
+// Initialize trajectory with control sequence
+void iLQR::generate_trajectory(const VectorXd &x_0, const VecOfVecXd &u0)
+{
+	T = u0.size();
+	init_traj(x_0, u0);
+	generate_trajectory();
+}
+
+// Warm-start
+void iLQR::generate_trajectory(const VectorXd &x_0)
+{
+	assert(us.size() > 0);
+
+	x0 = x_0;
+
+	double cost_i = forward_pass(x_0, us);
+	std::cout << "Initial cost: " << cost_i << "\n";
+	cost_s = cost_i;
+
+	generate_trajectory();
+}
+
+// This assumes that x0, xs, us are initialized
 void iLQR::generate_trajectory()
 {
-	// Check initialization - TODO this shouldn't even be a question... we can just put init_traj here
-	if (us.size()==0 || xs.size()==0){
-		std::cout << "Call init_traj first.\n";
-		return;
-	}
+	assert(!x0.empty());
+	assert(!xs.empty());
+	assert(!us.empty());
 
-	// TODO check if we ever use this
 	VecOfVecXd x_old, u_old;
 
 	// constants, timers, counters
@@ -262,7 +282,7 @@ void iLQR::generate_trajectory()
 VecOfVecXd iLQR::add_bias_to_u(const VecOfVecXd &u, const VecOfVecXd &l, const double alpha)
 {
 	VecOfVecXd new_u = u;
-	for(int i=0; i<u.size(); i++){
+	for(unsigned int i=0; i<u.size(); i++){
 		new_u[i] += l[i]*alpha;
 	}
 	return new_u;
@@ -272,7 +292,7 @@ VecOfVecXd iLQR::add_bias_to_u(const VecOfVecXd &u, const VecOfVecXd &l, const d
 double iLQR::get_gradient_norm(const VecOfVecXd& l, const VecOfVecXd& u)
 {
 	std::vector<double> vals(l.size());
-	for (int i=0; i<l.size(); i++)
+	for (unsigned int i=0; i<l.size(); i++)
 	{
 		VectorXd v = l[i].cwiseAbs().array() / (u[i].cwiseAbs().array() + 1);
 		double max_val = v.maxCoeff();
@@ -286,22 +306,22 @@ void iLQR::output_to_csv(const std::string filename)
 {
 	FILE *XU = fopen(filename.c_str(), "w");
 
-	for(int i=1; i<=xs[0].size(); i++)
+	for(unsigned int i=1; i<=xs[0].size(); i++)
 		fprintf(XU, "x%d, ", i);
-	for(int j=0; j<us[0].size(); j++)
+	for(unsigned int j=0; j<us[0].size(); j++)
 		fprintf(XU, "u%d, ", j);
 	fprintf(XU, "u%d\n", int(us[0].size()));
 
 	for(int t=0; t<T; t++)
 	{
-		for(int i=0; i<xs[t].size(); i++)
+		for(unsigned int i=0; i<xs[t].size(); i++)
 			fprintf(XU, "%f, ", xs[t](i));
-		for(int j=0; j<us[t].size()-1; j++)
+		for(unsigned int j=0; j<us[t].size()-1; j++)
 			fprintf(XU, "%f, ", us[t](j));
 		fprintf(XU, "%f\n", us[t](us[t].size()-1));
 	}
 
-	for(int i=0; i<xs[T].size(); i++)
+	for(unsigned int i=0; i<xs[T].size(); i++)
 		fprintf(XU, "%f, ", xs[T](i));
 
 	fclose(XU);

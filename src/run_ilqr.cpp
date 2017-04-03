@@ -11,7 +11,7 @@ int main()
 
 	DoubleIntegrator* simple_model = new DoubleIntegrator(goal);
 
-	iLQR ilqr_simple(simple_model, dt, T);
+	iLQR ilqr_simple(simple_model, dt);
 
 	VectorXd x0(4), xd(4);
 	x0 << 0., 0., 0., 0.;
@@ -22,8 +22,7 @@ int main()
 
 	auto start = std::chrono::system_clock::now();
 
-	ilqr_simple.init_traj(x0,u0);
-	ilqr_simple.generate_trajectory();
+	ilqr_simple.generate_trajectory(x0,u0);
 
 	auto now = std::chrono::system_clock::now();
 	long int elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - start).count();

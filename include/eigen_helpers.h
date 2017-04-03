@@ -13,7 +13,6 @@ using Eigen::VectorXd;
 using Eigen::MatrixXd;
 
 // Extracts elements of vec for which indices is non-zero
-// TODO find better way to do this
 VectorXd subvec_w_ind(const VectorXd& vec, const VectorXd& indices);
 
 MatrixXd rows_w_ind(MatrixXd &mat, VectorXd &indices);

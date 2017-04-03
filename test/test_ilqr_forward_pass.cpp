@@ -18,7 +18,7 @@ public:
     goal << 1.0, 1.0, 0.0, 0.0;
     DoubleIntegrator* simple_model = new DoubleIntegrator(goal);
 
-    ilqr_simple.reset(new iLQR(simple_model, dt, T));
+    ilqr_simple.reset(new iLQR(simple_model, dt));
 
     x0.resize(4);
     xd.resize(4);

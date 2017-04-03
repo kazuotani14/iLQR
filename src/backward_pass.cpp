@@ -11,6 +11,7 @@
  	   K: mxnxT 				dV: 2x1
  		 diverge - returns 0 if it doesn't diverge, timestep where it diverges otherwise
 */
+
 int iLQR::backward_pass()
 {
 	int n = model->x_dims;
@@ -56,13 +57,12 @@ int iLQR::backward_pass()
 			MatrixXd Lfree(m,n);
 			Lfree = -R.inverse() * (R.transpose().inverse()*rows_w_ind(Qux_reg, v_free));
 
-			// TODO fix this hack
-			if(v_free[0]==1 && v_free[1]==1)
-				K_i = Lfree;
-			else if (v_free[0]==1)
-				K_i.row(0) = Lfree;
-			else if (v_free[1]==1)
-				K_i.row(1) = Lfree;
+			int row_i = 0;
+			for(int k=0; k<v_free.size(); k++)
+			{
+				if(v_free(k))
+					K_i.row(k) = Lfree.row(row_i++);
+			}
 		}
 
 		// update cost-to-go approximation

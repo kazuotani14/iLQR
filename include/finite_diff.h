@@ -19,6 +19,4 @@ MatrixXd finite_diff_vec2vec(std::function<VectorXd(VectorXd)> f, VectorXd x, in
 
 MatrixXd finite_diff2_vec2scalar(std::function<double(VectorXd, VectorXd)> f, VectorXd x1, VectorXd x2);
 
-// TODO second derivatives
-
 #endif
