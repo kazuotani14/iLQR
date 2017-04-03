@@ -9,9 +9,23 @@ using namespace std::placeholders;
 // Given a trajectory {x(t),u(t)} from forward pass, compute deriviatives along it
 void iLQR::compute_derivatives(const VecOfVecXd &x, const VecOfVecXd &u)
 {
-    get_dynamics_derivatives(x, u);
-    get_cost_derivatives(x, u);
-    get_cost_2nd_derivatives(x, u);
+    // auto start = std::chrono::system_clock::now();
+    // get_dynamics_derivatives(x, u);
+    // auto now = std::chrono::system_clock::now();
+    long int elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - start).count();
+    // std::cout << "dx took: " << elapsed/1000. << " seconds." << std::endl;
+
+    // start = std::chrono::system_clock::now();
+    // get_cost_derivatives(x, u);
+    // now = std::chrono::system_clock::now();
+    elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - start).count();
+    // std::cout << "cx took: " << elapsed/1000. << " seconds." << std::endl;
+
+    // start = std::chrono::system_clock::now();
+    // get_cost_2nd_derivatives(x, u);
+    // now = std::chrono::system_clock::now();
+    elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - start).count();
+    // std::cout << "cxx took: " << elapsed/1000. << " seconds." << std::endl;
 }
 
 
