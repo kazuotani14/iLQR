@@ -11,25 +11,26 @@ set (CMAKE_CXX_STANDARD 11)
 
 # file(GLOB_RECURSE Foo_SOURCES "src/*.cpp")
 
-set (Foo_SOURCES "src/run_ilqr.cpp"
-                 "src/double_integrator.cpp"
-                 "src/ilqr_core.cpp"
-                 "src/forward_pass.cpp"
-                 "src/derivatives.cpp"
-                 "src/finite_diff.cpp"
-             "src/boxqp.cpp"
-         "src/eigen_helpers.cpp")
-file(GLOB_RECURSE Foo_HEADERS "include/*.h")
+set (ILQR_SOURCES "src/double_integrator.cpp"
+                  "src/ilqr_core.cpp"
+                  "src/forward_pass.cpp"
+                  "src/derivatives.cpp"
+                  "src/finite_diff.cpp"
+                  "src/boxqp.cpp"
+                  "src/eigen_helpers.cpp"
+                  "src/backward_pass.cpp")
 
-set (Foo_INCLUDE_DIRS "")
-foreach (_headerFile ${Foo_HEADERS})
+file(GLOB_RECURSE ILQR_HEADERS "include/*.h")
+
+set (ILQR_INCLUDE_DIRS "")
+foreach (_headerFile ${ILQR_HEADERS})
     get_filename_component(_dir ${_headerFile} PATH)
-    list (APPEND Foo_INCLUDE_DIRS ${_dir})
+    list (APPEND ILQR_INCLUDE_DIRS ${_dir})
 endforeach()
-list(REMOVE_DUPLICATES Foo_INCLUDE_DIRS)
+list(REMOVE_DUPLICATES ILQR_INCLUDE_DIRS)
 
-include_directories(${Foo_INCLUDE_DIRS})
-add_executable (run_iLQR ${Foo_SOURCES})
+include_directories(${ILQR_INCLUDE_DIRS})
+add_executable (run_iLQR "src/run_ilqr.cpp" ${ILQR_SOURCES})
 
 
 ###
@@ -93,9 +94,7 @@ endmacro(add_gtest)
 add_gtest(gtest_test "test/test_gtest.cpp")
 
 add_gtest(deriv_test "test/test_derivatives.cpp" "src/finite_diff.cpp")
-# add_executable(deriv_test "test/test_derivatives.cpp" "src/finite_diff.cpp")
-# target_link_libraries(deriv_test libgtest libgmock)
-add_executable(boxqp_test "test/test_boxqp.cpp" "src/boxqp.cpp" "src/eigen_helpers.cpp")
-target_link_libraries(boxqp_test libgtest libgmock)
-add_executable(double_int_test "test/test_doubleintegrator.cpp" "src/double_integrator.cpp")
-target_link_libraries(double_int_test libgtest libgmock)
+add_gtest(boxqp_test "test/test_boxqp.cpp" "src/boxqp.cpp" "src/eigen_helpers.cpp")
+add_gtest(double_int_test "test/test_doubleintegrator.cpp" "src/double_integrator.cpp")
+add_gtest(ilqr_deriv_test "test/test_ilqr_derivatives.cpp" ${ILQR_SOURCES})
+add_gtest(ilqr_forward_test "test/test_ilqr_forward_pass.cpp" ${ILQR_SOURCES})

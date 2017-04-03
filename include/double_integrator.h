@@ -7,9 +7,10 @@ class DoubleIntegrator : public Model
 {
 
 public:
-    DoubleIntegrator(): Hx(4,4), Hu(2,2), goal(4)
+    DoubleIntegrator(VectorXd xd): Hx(4,4), Hu(2,2), goal(xd)
     {
-        x_dims = u_dims = 2;
+        x_dims = 4;
+        u_dims = 2;
 
         Hx << 1, 0, 0, 0,
              0, 1, 0, 0,
@@ -17,7 +18,6 @@ public:
              0, 0, 0, 0.2;
         Hu << 1, 0,
               0, 1;
-        goal << 1.0, 1.0, 0.0, 0.0;
         u_min = Vector2d(-0.5, -0.5);
         u_max = Vector2d(0.5, 0.5);
     }

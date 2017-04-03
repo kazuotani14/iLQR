@@ -2,27 +2,28 @@
 #define _STANDARD_INCLUDES_H_
 
 #include <vector>
-#include "eigen/Eigen/Core"
-#include "eigen/Eigen/Eigenvalues"
-#include "eigen/Eigen/StdVector"
+#include <algorithm>
 #include <iostream>
 #include <cstdio>
 #include <math.h>
 #include <time.h>
 #include <ctime>
+
+#include "eigen/Eigen/Core"
+#include "eigen/Eigen/Eigenvalues"
+#include "eigen/Eigen/StdVector"
+#include "eigen_helpers.h"
+
 #define EIGEN_USE_NEW_STDVECTOR
 
-#define Eye2 Eigen::Matrix2d::Identity(2,2);
+using std::cout;
+using std::endl;
 
 using Eigen::Vector2d;
 using Eigen::VectorXd;
 using Eigen::MatrixXd;
-
-typedef Eigen::Vector2d Vec2d;
-typedef Eigen::VectorXd VecXd;
-typedef Eigen::MatrixXd MatXd;
-typedef std::vector<VecXd, Eigen::aligned_allocator<VecXd> > VecOfVecXd;
-typedef std::vector<MatXd, Eigen::aligned_allocator<MatXd> >  VecOfMatXd;
+typedef std::vector<VectorXd, Eigen::aligned_allocator<VectorXd>> VecOfVecXd;
+typedef std::vector<MatrixXd, Eigen::aligned_allocator<MatrixXd>>  VecOfMatXd;
 
 //---------------------------------
 // Math helper functions
@@ -110,7 +111,7 @@ inline VectorXd elem_sqrt(const VectorXd &vec)
 inline VectorXd sabs(const VectorXd &vec, const VectorXd &p)
 {
   //Differentiable "soft" absolute value function
-  VecXd sum = elem_sqrt(elem_square(vec)+elem_square(p));
+  VectorXd sum = elem_sqrt(elem_square(vec)+elem_square(p));
   return sum - p;
 }
 

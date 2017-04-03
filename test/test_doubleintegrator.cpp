@@ -15,26 +15,29 @@ public:
     dt = 0.05;
     x << 0.0, 0.0, 0.5, 0.1;
     u << 1, -1;
+
+    VectorXd goal(4);
+    goal << 1.0, 1.0, 0.0, 0.0;
+    model.reset(new DoubleIntegrator(goal));
   }
   //virtual void TearDown()   {}
-  
-  DoubleIntegrator model;
+
+  std::shared_ptr<DoubleIntegrator> model;
   VectorXd x, u;
   double dt;
 };
 
 TEST_F(DoubleIntegratorSetup, DxTest)
 {
-  VectorXd dx = model.dynamics(x, u);
+  VectorXd dx = model->dynamics(x, u);
   VectorXd expected(4); expected << 0.5, 0.1, 1., -1.;
   EXPECT_TRUE(dx.isApprox(expected, eq_tol));
-
 }
 
 TEST_F(DoubleIntegratorSetup, IntegrationTest)
 {
-  VectorXd dx = model.dynamics(x, u);
-  VectorXd x1 = model.integrate_dynamics(x, u, dt);
+  VectorXd dx = model->dynamics(x, u);
+  VectorXd x1 = model->integrate_dynamics(x, u, dt);
 
   VectorXd expected = x + dt*dx;
 
@@ -43,7 +46,10 @@ TEST_F(DoubleIntegratorSetup, IntegrationTest)
 
 TEST(DoubleIntegratorTest, CostTest)
 {
-  DoubleIntegrator model;
+  VectorXd goal(4);
+  goal << 1.0, 1.0, 0.0, 0.0;
+
+  DoubleIntegrator model(goal);
   VectorXd x(4); x << 0.1, 0.1, 0.5, 0.1;
   VectorXd u(2); u << 0.1, -1;
 

@@ -59,7 +59,7 @@ lineSearchResult quadclamp_line_search(const VectorXd x0, const VectorXd search_
 	double v = quadCost(H, g, x_clamped);
 	double old_v = quadCost(H, g, x0);
 
-	while ((v - old_v) > Armijo*(step*local_slope))
+	while ((v - old_v)/(step*local_slope) < Armijo)
 	{
 		step *= stepDec;
 		res.n_steps++;
@@ -115,39 +115,36 @@ boxQPResult boxQP(const MatrixXd &H, const VectorXd &g, const VectorXd &x0,
       // res.result = 4;
       break;
     }
-
-    VectorXd grad = H*x + g;
+	VectorXd grad = H*x + g;
+	oldvalue = val;
 
     // Find clamped dimensions
     old_clamped_dims = clamped_dims;
     clamped_dims.setZero();
     res.v_free.setOnes();
-	std::cout << "checking for clamped" << std::endl;
     for (int i=0; i<n_dims; i++)
     {
-	  std::cout << x(i) << " " << grad(i) << std::endl;
-      if(x(i)==lower(i) && grad(i)>0)
+      if((x(i)-lower(i))<1e-3 && grad(i)>0)
       {
-		std::cout << "clamped" << std::endl;
         clamped_dims(i) = 1;
         res.v_free(i) = 0;
       }
-      else if(x(i)==upper(i) && grad(i)<0)
+      else if((x(i)-upper(i))<1e-3 && grad(i)<0)
       {
-		std::cout << "clamped" << std::endl;
         clamped_dims(i) = 1;
         res.v_free(i) = 0;
       }
     }
 
     // Check if all dimensions are clamped
-    if(clamped_dims.all() == x.size()){
+    if(clamped_dims.all())
+	{
       res.result = 6;
       break;
     }
 
     // Factorize if clamped dimensions have changed
-    if (iter==1 || (old_clamped_dims-clamped_dims).sum() != 0)
+    if (iter==0 || (old_clamped_dims-clamped_dims).sum() != 0)
     {
       int n_free = res.v_free.sum();
       MatrixXd Hf;
@@ -162,7 +159,8 @@ boxQPResult boxQP(const MatrixXd &H, const VectorXd &g, const VectorXd &x0,
         Hf = H.block(1, 1, n_free, n_free);
       }
       Eigen::LLT<MatrixXd> lltOfHf(Hf); // Cholesky decomposition
-      res.H_free = lltOfHf.matrixL().transpose();
+	  if(lltOfHf.matrixL().size() > 0) // I don't know why this happens...
+      	res.H_free = lltOfHf.matrixL().transpose();
 
       nfactors++;
     }
@@ -170,7 +168,7 @@ boxQPResult boxQP(const MatrixXd &H, const VectorXd &g, const VectorXd &x0,
     // Check if gradient norm is below threshold
     double grad_norm = grad.cwiseProduct(res.v_free).norm();
     if (grad_norm < minGrad){
-      // res.result = 5;
+      res.result = 5;
       break;
     }
 
@@ -179,16 +177,16 @@ boxQPResult boxQP(const MatrixXd &H, const VectorXd &g, const VectorXd &x0,
 
     VectorXd search = VectorXd::Zero(x.size());
 
-		// TODO remove this hack - assumes size(x)==2
-		if(res.v_free[0]==1 && res.v_free[1]==1){
-			search = -res.H_free.inverse() * (res.H_free.transpose().inverse()*subvec_w_ind(grad_clamped, res.v_free)) - subvec_w_ind(x, res.v_free);
-		}
-		else if (res.v_free[0]==1){
-			search(0) = (-res.H_free.inverse() * (res.H_free.transpose().inverse()*subvec_w_ind(grad_clamped, res.v_free)) - subvec_w_ind(x, res.v_free))(0);
-		}
-		else if (res.v_free[1]==1){
-			search(1) = (-res.H_free.inverse() * (res.H_free.transpose().inverse()*subvec_w_ind(grad_clamped, res.v_free)) - subvec_w_ind(x, res.v_free))(0);
-		}
+	// TODO remove this hack - assumes size(x)==2
+	if(res.v_free[0]==1 && res.v_free[1]==1){
+		search = -res.H_free.inverse() * (res.H_free.transpose().inverse()*subvec_w_ind(grad_clamped, res.v_free)) - subvec_w_ind(x, res.v_free);
+	}
+	else if (res.v_free[0]==1){
+		search(0) = (-res.H_free.inverse() * (res.H_free.transpose().inverse()*subvec_w_ind(grad_clamped, res.v_free)) - subvec_w_ind(x, res.v_free))(0);
+	}
+	else if (res.v_free[1]==1){
+		search(1) = (-res.H_free.inverse() * (res.H_free.transpose().inverse()*subvec_w_ind(grad_clamped, res.v_free)) - subvec_w_ind(x, res.v_free))(0);
+	}
 
     lineSearchResult linesearch_res = quadclamp_line_search(x, search, H, g, lower, upper);
     if(linesearch_res.failed)

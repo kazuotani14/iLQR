@@ -5,7 +5,10 @@ int main()
 {
 	double dt = 0.05;
 	int T = 50;
-	DoubleIntegrator* simple_model = new DoubleIntegrator();
+	VectorXd goal(4);
+	goal << 1.0, 1.0, 0.0, 0.0;
+
+	DoubleIntegrator* simple_model = new DoubleIntegrator(goal);
 
 	iLQR ilqr_simple(simple_model, dt, T);
 
@@ -13,11 +16,8 @@ int main()
 	x0 << 0., 0., 0., 0.;
 
 	VecOfVecXd u0;
-	Vec2d u_init(0.1, 0.1);
-	for (int i=0; i<T; i++){
-		u0.push_back(u_init);
-	 	// u0.push_back(Vec2d::Random());
-	}
+	Vector2d u_init(0.1, 0.1);
+	for (int i=0; i<T; i++)  u0.push_back(u_init);
 
 	ilqr_simple.init_traj(x0,u0);
 	ilqr_simple.generate_trajectory();

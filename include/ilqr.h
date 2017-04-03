@@ -1,6 +1,7 @@
 #ifndef _ILQR_H_
 #define _ILQR_H_
 
+#include "gtest/gtest_prod.h"
 #include "standardIncludes.h"
 
 #include "model.h"
@@ -21,7 +22,29 @@ static Eigen::Map<VectorXd> Alpha(alpha_vec.data(), alpha_vec.size());
 
 class iLQR
 {
-  int T;          // number of state transitions (#timesteps-1)
+public:
+  iLQR(Model* p_dyn, double timeDelta, int timesteps): dt(timeDelta), T(timesteps)
+  {
+    model.reset(p_dyn);
+  }
+  iLQR() = default;
+
+  VectorXd x_d; // target state
+  std::shared_ptr<Model> model;
+
+  double init_traj(VectorXd &x_0, VecOfVecXd &u0);
+  void generate_trajectory();
+
+  // Tester functions
+  void output_to_csv();
+
+private:
+  FRIEND_TEST(ILQRSetup, dDynamicsTest);
+  FRIEND_TEST(ILQRSetup, dCostTest);
+  FRIEND_TEST(ILQRSetup, ddCostTest);
+  FRIEND_TEST(ILQRSetup, ForwardPassTest);
+
+  int T;  // number of state transitions
   double dt;
 
   // Tracking progress
@@ -31,50 +54,36 @@ class iLQR
   VecOfMatXd Ls;
 
   // Stuff relevant at each cycle
-  VecXd x_current;
-  VecXd u_current;
+  VectorXd x_current;
+  VectorXd u_current;
   double cost_s;
 
-  // Helper functions will modify passed-in variables instead of returning values,
-  //  because most of them need to return multiple values.
-  void forward_pass(const VecXd& x0, const VecOfVecXd& u,
-  									VecOfVecXd& xnew, VecOfVecXd& unew, double& new_cost);
+  MatrixXd du; 	//2*T double
+  VecOfMatXd fx; //nxnx(T+1)
+  VecOfMatXd fu; //nx2x(T+1)
+  VecOfVecXd cx; //nx(T+1)
+  VecOfVecXd cu; //2x(T+1)
+  VecOfMatXd cxx; //nxnx(T+1)
+  VecOfMatXd cxu; //nx2x(T+1)
+  VecOfMatXd cuu; //2x2x(T+1)
 
-  void forward_pass(const VecXd& x0, const VecOfVecXd& u,
-  									VecOfVecXd& xnew, VecOfVecXd& unew, double& new_cost,
+  Vector2d dV; //2x1
+	VecOfVecXd Vx; //nx(T+1)
+	VecOfMatXd Vxx; //nxnx(T+1)
+	VecOfMatXd L; //2xnxT
+	VecOfVecXd l; //2xT
+
+  double forward_pass(const VectorXd& x0, const VecOfVecXd& u);
+  double forward_pass(const VectorXd& x0, const VecOfVecXd& u,
   									const VecOfVecXd& x, const VecOfMatXd& L);
-
-  int backward_pass(const VecOfVecXd &cx, const VecOfVecXd &cu, const VecOfMatXd &cxx, const VecOfMatXd &cxu,
-  									const VecOfMatXd &cuu, const VecOfMatXd &fx, const VecOfMatXd &fu, const VecOfVecXd &u,
-  									VecOfVecXd &Vx, VecOfMatXd &Vxx, VecOfVecXd &k, VecOfMatXd &K, Vec2d &dV);
+  int backward_pass();
   VecOfVecXd adjust_u(VecOfVecXd &u, VecOfVecXd &l, double alpha);
 
   // Given a trajectory {x(t),u(t)} from forward pass, compute deriviatives along it
-  void compute_derivatives(const VecOfVecXd &x, const VecOfVecXd &u, VecOfMatXd &fx,
-  												 VecOfMatXd &fu, VecOfVecXd &cx, VecOfVecXd &cu,
-  												 VecOfMatXd &cxx, VecOfMatXd &cxu, VecOfMatXd &cuu);
-  void get_dynamics_derivatives(const VecOfVecXd &x, const VecOfVecXd &u,
-                                          VecOfMatXd &fx, VecOfMatXd &fu);
-  void get_cost_derivatives(const VecOfVecXd &x, const VecOfVecXd &u,
-  															   VecOfVecXd &cx, VecOfVecXd &cu);
-  void get_cost_2nd_derivatives(const VecOfVecXd &x, const VecOfVecXd &u,
-                                VecOfMatXd &cxx, VecOfMatXd &cxu, VecOfMatXd &cuu);
-
-public:
-  iLQR(Model* p_dyn, double timeDelta, int timesteps): dt(timeDelta), T(timesteps-1)
-  {
-    model.reset(p_dyn);
-  }
-
-  VecXd x_d; // target state
-  std::shared_ptr<Model> model;
-
-  double init_traj(VecXd &x_0, VecOfVecXd &u0);
-  void generate_trajectory();
-
-  // Tester functions
-  void output_to_csv();
-
+  void compute_derivatives(const VecOfVecXd &x, const VecOfVecXd &u);
+  void get_dynamics_derivatives(const VecOfVecXd &x, const VecOfVecXd &u);
+  void get_cost_derivatives(const VecOfVecXd &x, const VecOfVecXd &u);
+  void get_cost_2nd_derivatives(const VecOfVecXd &x, const VecOfVecXd &u);
 };
 
 #endif

@@ -1,18 +1,16 @@
 #include "ilqr.h"
 
 // initial roll-out
-void iLQR::forward_pass(const VectorXd &x0, const VecOfVecXd &u,
-						VecOfVecXd &xnew, VecOfVecXd &unew, double &new_cost)
+double iLQR::forward_pass(const VectorXd &x0, const VecOfVecXd &u)
 {
 	// Initialize dummy vectors;
 	VecOfVecXd x;
 	VecOfMatXd L;
 
-	forward_pass(x0, u, xnew, unew, new_cost, x, L);
+	return forward_pass(x0, u, x, L);
 }
 
-void iLQR::forward_pass(const VectorXd &x0, const VecOfVecXd &u,
-						VecOfVecXd &xnew, VecOfVecXd &unew, double &new_cost,
+double iLQR::forward_pass(const VectorXd &x0, const VecOfVecXd &u,
 						const VecOfVecXd &x, const VecOfMatXd &L)
 {
 	double total_cost = 0;
@@ -20,7 +18,7 @@ void iLQR::forward_pass(const VectorXd &x0, const VecOfVecXd &u,
 	VectorXd x_curr = x0;
 	VectorXd x1;
 	VectorXd u_curr;
-	xnew[0] = x0;
+	xs[0] = x0;
 
 	for(int t=0; t<T; t++)
 	{
@@ -28,22 +26,20 @@ void iLQR::forward_pass(const VectorXd &x0, const VecOfVecXd &u,
 
 		if (x.size()>0 && L.size()>0)
 		{
-			VectorXd dx = xnew[t] - x[t];
+			VectorXd dx = xs[t] - x[t];
 			u_curr += L[t]*dx; //apply LQR control gains
 		}
 
-		//clamp to min and max values in control_limits
-		unew[t] = clamp_to_limits(u_curr, model->u_min, model->u_max);
-
-		x1 = model->integrate_dynamics(x_curr, u_curr, dt); //step forward in time
+		us[t] = clamp_to_limits(u_curr, model->u_min, model->u_max);
+		x1 = model->integrate_dynamics(x_curr, u_curr, dt);
 		total_cost += model->cost(x_curr,u_curr);
 
-		xnew[t+1] = x1;
+		xs[t+1] = x1;
 		x_curr = x1;
 	}
 
 	// calculate final cost
-	total_cost += model->final_cost(xnew[xnew.size()-1]);
+	total_cost += model->final_cost(xs[xs.size()-1]);
 
-	new_cost = total_cost;
+	return total_cost;
 }

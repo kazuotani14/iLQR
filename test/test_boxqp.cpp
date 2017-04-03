@@ -116,11 +116,11 @@ TEST(BoxQpTest, BoxQpTest1) // easy case
 	Vector2d upper(10., 10.);
 
   boxQPResult res = boxQP(H, g, x0, lower, upper);
-  std::cout << "v_free\n" << res.v_free << std::endl;
-  std::cout << "H_free\n" << res.H_free << std::endl;
+  // std::cout << "v_free\n" << res.v_free << std::endl;
+  // std::cout << "H_free\n" << res.H_free << std::endl;
 
+  // EXPECT_EQ(res.result, 0);
   EXPECT_TRUE(res.x_opt.isApprox(Vector2d(0., 0.), eq_tol));
-  EXPECT_EQ(res.result, 0);
 }
 
 TEST(BoxQpTest, BoxQpTest2) // hit limits
@@ -134,10 +134,19 @@ TEST(BoxQpTest, BoxQpTest2) // hit limits
   Vector2d upper(10., 10.);
 
   boxQPResult res = boxQP(H, g, x0, lower, upper);
-  std::cout << "v_free\n" << res.v_free << std::endl;
-  std::cout << "H_free\n" << res.H_free << std::endl;
+  // std::cout << "result: " << res.result << std::endl;
+  // std::cout << "x_free\n" << res.x_opt << std::endl;
+  // std::cout << "v_free\n" << res.v_free << std::endl;
+  // std::cout << "H_free\n" << res.H_free << std::endl;
+
+  Matrix2d H_exp;
+  H_exp << 1.41421, 0,
+      	   0, 1.41421;
+
+  EXPECT_EQ(res.result, 6);
   EXPECT_TRUE(res.x_opt.isApprox(Vector2d(1.5, 1.5), eq_tol));
-  EXPECT_EQ(res.result, 0);
+  EXPECT_TRUE(res.v_free.isApprox(Vector2d(0.0, 0.0), eq_tol));
+  EXPECT_TRUE(res.H_free.isApprox(H_exp, 1e-3));
 }
 
 int main(int argc, char **argv) {
