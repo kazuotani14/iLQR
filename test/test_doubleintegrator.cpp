@@ -5,33 +5,34 @@
 using Eigen::VectorXd;
 static const double eq_tol = 1e-6;
 
-// class DoubleIntegratorSetup : public ::testing::Test
-// {
-// public:
-//   Setup()
-//   { }
-//   DoubleIntegrator model;
-// };
-
-TEST(DoubleIntegratorTest, DxTest)
+class DoubleIntegratorSetup : public ::testing::Test
 {
+public:
+  virtual void SetUp()
+  {
+    x = VectorXd(4);
+    u = VectorXd(2);
+    dt = 0.05;
+    x << 0.0, 0.0, 0.5, 0.1;
+    u << 1, -1;
+  }
+  //virtual void TearDown()   {}
+  
   DoubleIntegrator model;
-  VectorXd x(4); x << 0.0, 0.0, 0.5, 0.1;
-  VectorXd u(2); u << 1, -1;
+  VectorXd x, u;
+  double dt;
+};
 
+TEST_F(DoubleIntegratorSetup, DxTest)
+{
   VectorXd dx = model.dynamics(x, u);
   VectorXd expected(4); expected << 0.5, 0.1, 1., -1.;
   EXPECT_TRUE(dx.isApprox(expected, eq_tol));
 
 }
 
-TEST(DoubleIntegratorTest, IntegrationTest)
+TEST_F(DoubleIntegratorSetup, IntegrationTest)
 {
-  DoubleIntegrator model;
-  VectorXd x(4); x << 0.0, 0.0, 0.5, 0.1;
-  VectorXd u(2); u << 1, -1;
-  double dt = 0.05;
-
   VectorXd dx = model.dynamics(x, u);
   VectorXd x1 = model.integrate_dynamics(x, u, dt);
 

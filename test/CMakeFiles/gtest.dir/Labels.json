@@ -1,0 +1,51 @@
+
+{
+	"sources" : 
+	[
+		
+		{
+			"file" : "/Users/Kazu/Code/ilqr/test/CMakeFiles/gtest"
+		},
+		
+		{
+			"file" : "/Users/Kazu/Code/ilqr/test/CMakeFiles/gtest.rule"
+		},
+		
+		{
+			"file" : "/Users/Kazu/Code/ilqr/test/CMakeFiles/gtest-complete.rule"
+		},
+		
+		{
+			"file" : "/Users/Kazu/Code/ilqr/test/gtest/src/gtest-stamp/gtest-install.rule"
+		},
+		
+		{
+			"file" : "/Users/Kazu/Code/ilqr/test/gtest/src/gtest-stamp/gtest-mkdir.rule"
+		},
+		
+		{
+			"file" : "/Users/Kazu/Code/ilqr/test/gtest/src/gtest-stamp/gtest-download.rule"
+		},
+		
+		{
+			"file" : "/Users/Kazu/Code/ilqr/test/gtest/src/gtest-stamp/gtest-update.rule"
+		},
+		
+		{
+			"file" : "/Users/Kazu/Code/ilqr/test/gtest/src/gtest-stamp/gtest-patch.rule"
+		},
+		
+		{
+			"file" : "/Users/Kazu/Code/ilqr/test/gtest/src/gtest-stamp/gtest-configure.rule"
+		},
+		
+		{
+			"file" : "/Users/Kazu/Code/ilqr/test/gtest/src/gtest-stamp/gtest-build.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : [ "gtest" ],
+		"name" : "gtest"
+	}
+}
