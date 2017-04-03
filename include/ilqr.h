@@ -82,6 +82,13 @@ private:
   FRIEND_TEST(ILQRSetup, dCostTest);
   FRIEND_TEST(ILQRSetup, ddCostTest);
   FRIEND_TEST(ILQRSetup, ForwardPassTest);
+  
+  void calculate_cxx(const VecOfVecXd &x, const VecOfVecXd &u, int start_T, int end_T);
+  void calculate_cxu(const VecOfVecXd &x, const VecOfVecXd &u, int start_T, int end_T);
+  void calculate_cuu(const VecOfVecXd &x, const VecOfVecXd &u, int start_T, int end_T);
+  //multi-threaded version - about 2 to 3 times faster
+  void get_cost_2nd_derivatives_mt(const VecOfVecXd &x, const VecOfVecXd &u, int n_threads_per);
+
 };
 
 #endif
