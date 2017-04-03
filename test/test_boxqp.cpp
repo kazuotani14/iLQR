@@ -149,6 +149,33 @@ TEST(BoxQpTest, BoxQpTest2) // hit limits
   EXPECT_TRUE(res.H_free.isApprox(H_exp, 1e-3));
 }
 
+TEST(BoxQpTest, BoxQpTest3)
+{
+  Vector2d x0(0., 0.);
+  Matrix2d H;
+  H << 3.001, 0,
+       0, 3.001;
+  Vector2d g(0.201, 0.201);
+  Vector2d lower(-0.6, -0.6);
+  Vector2d upper(0.4, 0.4);
+
+  boxQPResult res = boxQP(H, g, x0, lower, upper);
+  std::cout << "result: " << res.result << std::endl;
+  std::cout << "x_free\n" << res.x_opt << std::endl;
+  std::cout << "v_free\n" << res.v_free << std::endl;
+  std::cout << "H_free\n" << res.H_free << std::endl;
+
+  Matrix2d H_exp;
+  H_exp << 1.73234, 0,
+      	   0, 1.73234;
+
+  EXPECT_EQ(res.result, 5);
+  EXPECT_TRUE(res.x_opt.isApprox(Vector2d(-0.0669777, -0.0669777), eq_tol));
+  EXPECT_TRUE(res.v_free.isApprox(Vector2d(1., 1.), eq_tol));
+  EXPECT_TRUE(res.H_free.isApprox(H_exp, 1e-3));
+}
+
+
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

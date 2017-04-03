@@ -20,7 +20,7 @@ double DoubleIntegrator::cost(const VectorXd& x, const VectorXd& u)
 
 double DoubleIntegrator::final_cost(const VectorXd& x)
 {
-    double cost = x.transpose()*Hx*x;
+    double cost = (goal-x).transpose()*Hx*(goal-x);
     return cost;
 }
 

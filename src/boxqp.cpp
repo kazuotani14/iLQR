@@ -92,11 +92,16 @@ boxQPResult boxQP(const MatrixXd &H, const VectorXd &g, const VectorXd &x0,
   assert(upper.size() == n_dims);
 
   VectorXd x = clamp_to_limits(x0, lower, upper);
-  double val = 0.5*x.transpose()*H*x + x.dot(g);
+  double val = x.transpose()*H*x + x.dot(g);
   double oldvalue = 0;
 
-	int nfactors = 0;
-	boxQPResult res(n_dims);
+  // print_eigen("lower", lower);
+  // print_eigen("upper", upper);
+  // print_eigen("x0", x0);
+  // std::cout << "val: " << val << std::endl;
+
+  int nfactors = 0;
+  boxQPResult res(n_dims);
 
   #ifdef VERBOSE
 		std::cout << "==========\nStarting box-QP, dimension " << n_dims << ", initial value: " << val << ".\n";
@@ -112,11 +117,14 @@ boxQPResult boxQP(const MatrixXd &H, const VectorXd &g, const VectorXd &x0,
     // Check if we've stopped improving
     if(iter>0 && (oldvalue - val) < minRelImprove*std::abs(oldvalue))
     {
-      // res.result = 4;
+      res.result = 4;
       break;
     }
 	VectorXd grad = H*x + g;
 	oldvalue = val;
+
+	// print_eigen("x", x);
+	// print_eigen("grad", grad);
 
     // Find clamped dimensions
     old_clamped_dims = clamped_dims;
@@ -124,17 +132,20 @@ boxQPResult boxQP(const MatrixXd &H, const VectorXd &g, const VectorXd &x0,
     res.v_free.setOnes();
     for (int i=0; i<n_dims; i++)
     {
-      if((x(i)-lower(i))<1e-3 && grad(i)>0)
+      if(std::abs(x(i)-lower(i))<1e-3 && grad(i)>0)
       {
         clamped_dims(i) = 1;
         res.v_free(i) = 0;
       }
-      else if((x(i)-upper(i))<1e-3 && grad(i)<0)
+      else if(std::abs(x(i)-upper(i))<1e-3 && grad(i)<0) // TODO replace with approx_eq
       {
         clamped_dims(i) = 1;
         res.v_free(i) = 0;
       }
     }
+
+	// print_eigen("clamped", clamped_dims);
+	// print_eigen("v_free", res.v_free);
 
     // Check if all dimensions are clamped
     if(clamped_dims.all())
@@ -167,6 +178,7 @@ boxQPResult boxQP(const MatrixXd &H, const VectorXd &g, const VectorXd &x0,
 
     // Check if gradient norm is below threshold
     double grad_norm = grad.cwiseProduct(res.v_free).norm();
+	// std::cout << "grad_norm: " << grad_norm << std::endl;
     if (grad_norm < minGrad){
       res.result = 5;
       break;

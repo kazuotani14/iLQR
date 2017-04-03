@@ -6,7 +6,7 @@
 #include <iostream>
 #include <cmath>
 
-static const double eps = 1e-6;
+static const double eps = 1e-3;
 
 using Eigen::VectorXd;
 using Eigen::MatrixXd;

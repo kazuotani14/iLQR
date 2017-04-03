@@ -37,7 +37,7 @@ void print_eigen(const std::string name, const Eigen::Ref<const Eigen::MatrixXd>
 {
   if(mat.cols() == 1)
   {
-    std::cout << name << ": " << mat.transpose().format(CleanFmt) << std::endl;
+    std::cout << name << ": " << mat.transpose().format(CleanFmt) << ";" << std::endl;
   }
   else{
     std::cout << name << ":\n" << mat.format(CleanFmt) << std::endl;

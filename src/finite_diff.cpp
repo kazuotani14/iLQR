@@ -17,6 +17,8 @@ VectorXd finite_diff_vec2scalar(std::function<double(VectorXd)> f, VectorXd x)
     plus = minus = x;
     plus(i) += eps;
     minus(i) -= eps;
+    // std::cout << "f(plus): " << f(plus) << " f(minus): " << f(minus) << std::endl;
+    // std::cout << (f(plus)-f(minus)) / (2*eps) << std::endl;
     dx(i) = (f(plus)-f(minus)) / (2*eps);
   }
 

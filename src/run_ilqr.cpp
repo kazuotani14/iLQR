@@ -4,7 +4,7 @@
 int main()
 {
 	double dt = 0.05;
-	int T = 50;
+	int T = 100;
 	VectorXd goal(4);
 	goal << 1.0, 1.0, 0.0, 0.0;
 
@@ -17,7 +17,7 @@ int main()
 
 	VecOfVecXd u0;
 	Vector2d u_init(0.1, 0.1);
-	for (int i=0; i<T; i++)  u0.push_back(u_init);
+	for (int i=0; i<T; i++)  u0.push_back(u_init); //+Vector2d::Random()*0.1);
 
 	ilqr_simple.init_traj(x0,u0);
 	ilqr_simple.generate_trajectory();

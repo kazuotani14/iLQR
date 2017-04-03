@@ -8,17 +8,19 @@
 #include "boxqp.h"
 #include <memory>
 
+static const int maxIter = 10;
 static const double tolFun = 1e-6;
 static const double tolGrad = 1e-6;
-static const int maxIter = 30;
 static double lambda = 1;
 static double dlambda = 1;
 static const double lambdaFactor = 1.6;
 static const double lambdaMax = 1e11;
 static const double lambdaMin = 1e-8;
 static const double zMin = 0;
+
 static std::vector<double> alpha_vec = {1.0000, 0.5012, 0.2512, 0.1259, 0.0631, 0.0316, 0.0158, 0.0079, 0.0040, 0.0020, 0.0010};
 static Eigen::Map<VectorXd> Alpha(alpha_vec.data(), alpha_vec.size());
+
 
 class iLQR
 {
@@ -29,13 +31,12 @@ public:
   }
   iLQR() = default;
 
-  VectorXd x_d; // target state
   std::shared_ptr<Model> model;
+  VectorXd x_d; // target state TODO use this
 
   double init_traj(VectorXd &x_0, VecOfVecXd &u0);
   void generate_trajectory();
 
-  // Tester functions
   void output_to_csv();
 
 private:
@@ -46,6 +47,8 @@ private:
 
   int T;  // number of state transitions
   double dt;
+
+  VectorXd x0;
 
   // Tracking progress
   VecOfVecXd xs; // states from last trajectory
@@ -70,8 +73,9 @@ private:
   Vector2d dV; //2x1
 	VecOfVecXd Vx; //nx(T+1)
 	VecOfMatXd Vxx; //nxnx(T+1)
-	VecOfMatXd L; //2xnxT
-	VecOfVecXd l; //2xT
+  VecOfVecXd k; //2xnxT
+  VecOfMatXd K; //2xT
+
 
   double forward_pass(const VectorXd& x0, const VecOfVecXd& u);
   double forward_pass(const VectorXd& x0, const VecOfVecXd& u,

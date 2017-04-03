@@ -33,13 +33,15 @@ double iLQR::forward_pass(const VectorXd &x0, const VecOfVecXd &u,
 		us[t] = clamp_to_limits(u_curr, model->u_min, model->u_max);
 		x1 = model->integrate_dynamics(x_curr, u_curr, dt);
 		total_cost += model->cost(x_curr,u_curr);
+		// cout << model->cost(x_curr,u_curr) << endl;
 
 		xs[t+1] = x1;
 		x_curr = x1;
 	}
 
 	// calculate final cost
-	total_cost += model->final_cost(xs[xs.size()-1]);
+	total_cost += model->final_cost(xs[T]);
+	// cout << model->final_cost(xs[T]) << endl;
 
 	return total_cost;
 }
