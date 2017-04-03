@@ -1,7 +1,7 @@
 #ifndef _LOCO_CAR_H_
 #define _LOCO_CAR_H_
 
-#include "standardIncludes.h"
+#include "common.h"
 #include "ilqr.h"
 
 class LocoCar : public iLQR

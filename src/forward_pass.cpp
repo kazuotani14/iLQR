@@ -34,7 +34,6 @@ double iLQR::forward_pass(const VectorXd &x0, const VecOfVecXd &u)
 	// calculate final cost
 	xs = x_new;
 	total_cost += model->final_cost(xs[T]);
-	// cout << model->final_cost(xs[T]) << endl;
 
 	return total_cost;
 }

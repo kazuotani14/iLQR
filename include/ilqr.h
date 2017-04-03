@@ -2,12 +2,11 @@
 #define _ILQR_H_
 
 #include "gtest/gtest_prod.h"
-#include "standardIncludes.h"
+#include "common.h"
 
 #include "model.h"
 #include "boxqp.h"
 #include <memory>
-#include <algorithm>
 #include <numeric>
 
 static const int maxIter = 10;
@@ -39,7 +38,7 @@ public:
   double init_traj(VectorXd &x_0, VecOfVecXd &u0);
   void generate_trajectory();
 
-  void output_to_csv();
+  void output_to_csv(const std::string filename);
 
 private:
   FRIEND_TEST(ILQRSetup, dDynamicsTest);
@@ -52,39 +51,33 @@ private:
 
   VectorXd x0;
 
-  // Tracking progress
   VecOfVecXd xs; // states from last trajectory
   VecOfVecXd us; // controls from last trajectory
   VecOfVecXd ls;
   VecOfMatXd Ls;
-
-  // Stuff relevant at each cycle
-  VectorXd x_current;
-  VectorXd u_current;
   double cost_s;
 
-  MatrixXd du; 	//2*T double
+  // n = dims(state), m = dims(control)
+  MatrixXd du; 	//m*T
   VecOfMatXd fx; //nxnx(T+1)
-  VecOfMatXd fu; //nx2x(T+1)
+  VecOfMatXd fu; //nxmx(T+1)
   VecOfVecXd cx; //nx(T+1)
-  VecOfVecXd cu; //2x(T+1)
+  VecOfVecXd cu; //mx(T+1)
   VecOfMatXd cxx; //nxnx(T+1)
-  VecOfMatXd cxu; //nx2x(T+1)
-  VecOfMatXd cuu; //2x2x(T+1)
+  VecOfMatXd cxu; //nxmx(T+1)
+  VecOfMatXd cuu; //mxmx(T+1)
 
   Vector2d dV; //2x1
 	VecOfVecXd Vx; //nx(T+1)
 	VecOfMatXd Vxx; //nxnx(T+1)
-  VecOfVecXd k; //2xnxT
-  VecOfMatXd K; //2xT
-
+  VecOfVecXd k; //mxnxT
+  VecOfMatXd K; //mxT
 
   double forward_pass(const VectorXd& x0, const VecOfVecXd& u);
   int backward_pass();
-  VecOfVecXd adjust_u(VecOfVecXd &u, VecOfVecXd &l, double alpha);
+  VecOfVecXd add_bias_to_u(const VecOfVecXd &u, const VecOfVecXd &l, const double alpha);
   double get_gradient_norm(const VecOfVecXd& l, const VecOfVecXd& u);
 
-  // Given a trajectory {x(t),u(t)} from forward pass, compute deriviatives along it
   void compute_derivatives(const VecOfVecXd &x, const VecOfVecXd &u);
   void get_dynamics_derivatives(const VecOfVecXd &x, const VecOfVecXd &u);
   void get_cost_derivatives(const VecOfVecXd &x, const VecOfVecXd &u);

@@ -16,13 +16,9 @@ int iLQR::backward_pass()
 	int n = model->x_dims;
 	int m = model->u_dims;
 
-
-
 	//cost-to-go at end
 	Vx[T] = cx[T];
 	Vxx[T] = cxx[T];
-	// print_eigen("Vx[T]", cx[T]);
-	// print_eigen("Vxx[T]", cxx[T]);
 
 	VectorXd Qx(n), Qu(m);
 	MatrixXd Qxx(n,n), Qux(m,n), Quu(m,m);
@@ -38,25 +34,7 @@ int iLQR::backward_pass()
 		Qux = cxu[i].transpose() + (fu[i].transpose() * Vxx[i+1] * fx[i]);
 	    Quu = cuu[i] + (fu[i].transpose() * Vxx[i+1] * fu[i]);
 
-		// print_eigen("fx", fx[i]);
-		// print_eigen("fu", fu[i]);
-		// print_eigen("cx", cx[i]);
-		// print_eigen("cu", cu[i]);
-		// print_eigen("cxx", cxx[i]);
-		// print_eigen("cxu", cxu[i]);
-		// print_eigen("cuu", cuu[i]);
-		// print_eigen("Vx", Vx[i+1]);
-		// print_eigen("Vxx", Vxx[i+1]);
-		//
-		// print_eigen("Qx", Qx);
-		// print_eigen("Qu", Qu);
-		// print_eigen("Qxx", Qxx);
-		// print_eigen("Qux", Qux);
-		// print_eigen("Quu", Quu);
-		//
-		// getchar();
-
-	    MatrixXd Vxx_reg = Vxx[i+1]; // TODO remove this?
+	    MatrixXd Vxx_reg = Vxx[i+1];
 		MatrixXd Qux_reg = cxu[i].transpose() + (fu[i].transpose() * Vxx_reg * fx[i]);
 		MatrixXd QuuF = cuu[i] + (fu[i].transpose() * Vxx_reg * fu[i]) + (lambda*MatrixXd::Identity(2,2));
 
@@ -69,10 +47,6 @@ int iLQR::backward_pass()
 		k_i = res.x_opt;
 		MatrixXd R = res.H_free;
 		VectorXd v_free = res.v_free;
-
-		// print_eigen("R", R);
-		// print_eigen("v_free", v_free);
-		// getchar();
 
 		if(result < 1) return i;
 
@@ -94,13 +68,6 @@ int iLQR::backward_pass()
 		// update cost-to-go approximation
 		dV(0) += k_i.transpose()*Qu;
 		dV(1) += 0.5*k_i.transpose()*Quu*k_i;
-
-		// print_eigen("Qu", Qu);
-		// print_eigen("Quu", Quu);
-		// print_eigen("k_i", k_i);
-		//
-		// print_eigen("dV", dV);
-		// getchar();
 
 		Vx[i]  = Qx  + K_i.transpose()*Quu*k_i + K_i.transpose()*Qu + Qux.transpose()*k_i;
 		Vxx[i] = Qxx + K_i.transpose()*Quu*K_i + K_i.transpose()*Qux + Qux.transpose()*K_i;

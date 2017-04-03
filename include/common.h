@@ -8,6 +8,7 @@
 #include <math.h>
 #include <time.h>
 #include <ctime>
+#include <chrono>
 
 #include "eigen/Eigen/Core"
 #include "eigen/Eigen/Eigenvalues"
@@ -92,27 +93,6 @@ inline T Mod(T x, T y)
 inline double wrap_to_pi(double angle)
 {
   return Mod(angle+pi, 2*pi) - pi;
-}
-
-//---------------------------------
-// Eigen-specific helper functions
-//---------------------------------
-
-inline VectorXd elem_square(const VectorXd &vec)
-{
-  return vec.array().square().matrix();
-}
-
-inline VectorXd elem_sqrt(const VectorXd &vec)
-{
-  return vec.array().sqrt().matrix();
-}
-
-inline VectorXd sabs(const VectorXd &vec, const VectorXd &p)
-{
-  //Differentiable "soft" absolute value function
-  VectorXd sum = elem_sqrt(elem_square(vec)+elem_square(p));
-  return sum - p;
 }
 
 #endif

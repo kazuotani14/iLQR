@@ -1,8 +1,4 @@
-#include <iostream>
-#include <eigen/Eigen/Dense>
-#include <math.h>
-#include <vector>
-#include "standardIncludes.h"
+#include "common.h"
 
 struct opt_deriv{
 	VecOfMatXd m;

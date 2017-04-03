@@ -22,4 +22,21 @@ const Eigen::IOFormat CleanFmt(3, 0, ", ", "\n", "", "");
 
 void print_eigen(const std::string name, const Eigen::Ref<const Eigen::MatrixXd>& mat);
 
+inline VectorXd elem_square(const VectorXd &vec)
+{
+  return vec.array().square().matrix();
+}
+
+inline VectorXd elem_sqrt(const VectorXd &vec)
+{
+  return vec.array().sqrt().matrix();
+}
+
+inline VectorXd sabs(const VectorXd &vec, const VectorXd &p)
+{
+  //Differentiable "soft" absolute value function
+  VectorXd sum = elem_sqrt(elem_square(vec)+elem_square(p));
+  return sum - p;
+}
+
 #endif

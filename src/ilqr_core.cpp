@@ -88,6 +88,9 @@ void iLQR::generate_trajectory()
 
 		//--------------------------------------------------------------------------
 		//STEP 1: Differentiate dynamics and cost along new trajectory
+
+		auto start = std::chrono::system_clock::now();
+
 		if (flgChange)
 		{
 			compute_derivatives(xs,us);
@@ -97,12 +100,9 @@ void iLQR::generate_trajectory()
 			cout << "Finished step 1 : compute derivatives." << endl;;
 		#endif
 
-
-		// for(const auto& i : cx) print_eigen("cx", i);
-		// for(const auto& i : us) print_eigen("us", i);
-		// for(const auto& i : cu) print_eigen("cu", i);
-		// for(const auto& i : cxx) print_eigen("cxx", i);
-		// getchar();
+		auto now = std::chrono::system_clock::now();
+		long int elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - start).count();
+		cout << "compute_derivatives took: " << elapsed/1000. << " seconds." << endl;
 
 		//--------------------------------------------------------------------------
 		// STEP 2: Backward pass, compute optimal control law and cost-to-go
@@ -151,16 +151,12 @@ void iLQR::generate_trajectory()
 		VecOfVecXd unew(T);
 		double alpha;
 
-		// for(const auto& ki : k) print_eigen("ki", ki);
-		// for(const auto& Ki : K) print_eigen("Ki", Ki);
-		// getchar();
-
 		if (backPassDone) //  serial backtracking line-search
 		{
 			for (int i=0; i<Alpha.size(); i++)
 			{
 				alpha = Alpha(i);
-				VecOfVecXd u_plus_feedforward = adjust_u(us, k, alpha);
+				VecOfVecXd u_plus_feedforward = add_bias_to_u(us, k, alpha);
 
 				new_cost = forward_pass(x0, u_plus_feedforward);
 				dcost    = cost_s - new_cost;
@@ -177,16 +173,6 @@ void iLQR::generate_trajectory()
 						cout << "Warning: non-positive expected reduction: should not occur" << endl;
 					#endif
 				}
-
-				// cout << "alpha: " << alpha << endl;
-				// cout << "old cost: " << cost_s << endl;;
-				// cout << "new_cost: " << new_cost << endl;;
-				// cout << "dcost: " << dcost << endl;
-				// cout << "expected: " << expected << endl;
-				// print_eigen("dV", dV);
-				// for(const auto& ui : us) print_eigen("u_out", ui);
-				// cout << "z: " << z << endl;
-				// getchar();
 
 				if(z > zMin)
 				{
@@ -269,15 +255,11 @@ void iLQR::generate_trajectory()
 
 	} // end top-level for-loop
 
-	output_to_csv();
-	// for(const auto& xi: xs) print_eigen("x", xi);
-	// for(const auto& ui: us) print_eigen("u", ui);
+	output_to_csv("ilqr_result.csv");
 
 } //generate_trajectory
 
-
-// TODO rename
-VecOfVecXd iLQR::adjust_u(VecOfVecXd &u, VecOfVecXd &l, double alpha)
+VecOfVecXd iLQR::add_bias_to_u(const VecOfVecXd &u, const VecOfVecXd &l, const double alpha)
 {
 	VecOfVecXd new_u = u;
 	for(int i=0; i<u.size(); i++){
@@ -300,9 +282,9 @@ double iLQR::get_gradient_norm(const VecOfVecXd& l, const VecOfVecXd& u)
 	return average;
 }
 
-void iLQR::output_to_csv()
+void iLQR::output_to_csv(const std::string filename)
 {
-	FILE *XU = fopen("XU.csv", "w");
+	FILE *XU = fopen(filename.c_str(), "w");
 
 	for(int i=1; i<=xs[0].size(); i++)
 		fprintf(XU, "x%d, ", i);
@@ -323,4 +305,5 @@ void iLQR::output_to_csv()
 		fprintf(XU, "%f, ", xs[T](i));
 
 	fclose(XU);
+	cout << "Saved iLQR result to " << filename << endl;
 }
