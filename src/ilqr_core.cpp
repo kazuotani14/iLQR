@@ -75,7 +75,7 @@ void iLQR::generate_trajectory(const VectorXd &x_0)
 // This assumes that x0, xs, us are initialized
 void iLQR::generate_trajectory()
 {
-	assert(!x0.empty());
+	assert(x0.size()>0);
 	assert(!xs.empty());
 	assert(!us.empty());
 

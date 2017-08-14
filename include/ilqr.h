@@ -81,17 +81,17 @@ private:
   void get_cost_derivatives(const VecOfVecXd &x, const VecOfVecXd &u);
   void get_cost_2nd_derivatives(const VecOfVecXd &x, const VecOfVecXd &u);
 
-  FRIEND_TEST(ILQRSetup, dDynamicsTest);
-  FRIEND_TEST(ILQRSetup, dCostTest);
-  FRIEND_TEST(ILQRSetup, ddCostTest);
-  FRIEND_TEST(ILQRSetup, ForwardPassTest);
-  
+  //multi-threaded version - about 2 to 3 times faster
+  void get_cost_2nd_derivatives_mt(const VecOfVecXd &x, const VecOfVecXd &u, int n_threads_per);
+
   void calculate_cxx(const VecOfVecXd &x, const VecOfVecXd &u, int start_T, int end_T);
   void calculate_cxu(const VecOfVecXd &x, const VecOfVecXd &u, int start_T, int end_T);
   void calculate_cuu(const VecOfVecXd &x, const VecOfVecXd &u, int start_T, int end_T);
 
-  //multi-threaded version - about 2 to 3 times faster
-  void get_cost_2nd_derivatives_mt(const VecOfVecXd &x, const VecOfVecXd &u, int n_threads_per);
+  FRIEND_TEST(ILQRSetup, dDynamicsTest);
+  FRIEND_TEST(ILQRSetup, dCostTest);
+  FRIEND_TEST(ILQRSetup, ddCostTest);
+  FRIEND_TEST(ILQRSetup, ForwardPassTest);
 
 };
 
