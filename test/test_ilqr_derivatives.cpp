@@ -11,7 +11,7 @@ public:
   virtual void SetUp()
   {
     double dt = 0.05;
-    int T = 10;
+    int T = 99;
     VectorXd goal(4);
     goal << 1.0, 1.0, 0.0, 0.0;
     DoubleIntegrator* simple_model = new DoubleIntegrator(goal);

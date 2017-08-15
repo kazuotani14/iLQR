@@ -10,6 +10,17 @@ _Pros/cons vs other trajectory optimization algorithms_
 * Direct methods tend to find optima easier than indirect/shooting methods. Shooting methods are much more sensitive to local minima.
 * Shooting methods make it easy to use warm-starts.
 
+### Usage
+
+* `mkdir build; cd build`
+* `cmake ..` or `cmake -DCMAKE_BUILD_TYPE=Debug ..` to compile with debug flags
+* `make`
+* Define a dynamics and cost model based on Model (see double_integrator example)
+
+### Misc references
+
+* [Eigen FAQ](http://eigen.tuxfamily.org/index.php?title=FAQ)
+
 ### To-do
 
 * add Model with nonlinear dynamics
@@ -17,18 +28,5 @@ _Pros/cons vs other trajectory optimization algorithms_
     * two-link arm
 * remove error codes - use enums
 * python script for plotting output
-
-_Second priority_
-
 * integrate cost for change in control input
-* add documentation
-
-### Usage
-
-* `mkdir build; cd build`
-* `cmake ..` or `cmake -DCMAKE_BUILD_TYPE=Debug ..` to compile with debug flags
-* `make`
-
-### Misc references
-
-* [Eigen FAQ](http://eigen.tuxfamily.org/index.php?title=FAQ)
+* additional documentation for future me

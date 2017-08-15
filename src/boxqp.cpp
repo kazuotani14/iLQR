@@ -27,18 +27,19 @@ double quadCost(const MatrixXd& Q, const VectorXd& c, const VectorXd& x)
 VectorXd clamp_to_limits(const VectorXd &x, const VectorXd& lower, const VectorXd& upper)
 {
 	VectorXd x_clamped(x.size());
-  for(int i=0; i<x.size(); i++)
-  {
-    x_clamped(i) = std::min(upper(i), std::max(lower(i), x(i)));
-  }
+	for(int i=0; i<x.size(); i++)
+	{
+		x_clamped(i) = std::min(upper(i), std::max(lower(i), x(i)));
+	}
+	// VectorXd x_clamped = upper.cwiseMin(x.cwiseMax(lower));
 	return x_clamped;
 }
 
 // Armijo line search: for quadratic cost function with limits on x
 // Find a step size in the given search direction that leads to at least the expected decrease in value
-lineSearchResult quadclamp_line_search(const VectorXd x0, const VectorXd search_dir,
-									   const MatrixXd Q, const VectorXd c,
-									   const VectorXd lower, const VectorXd upper)
+lineSearchResult quadclamp_line_search(const VectorXd& x0, const VectorXd& search_dir,
+									   const MatrixXd& Q, const VectorXd& c,
+									   const VectorXd& lower, const VectorXd& upper)
 {
 	double step = 1;
 	lineSearchResult res(x0.size());
@@ -178,7 +179,8 @@ boxQPResult boxQP(const MatrixXd &Q, const VectorXd &c, const VectorXd &x0,
     VectorXd search = VectorXd::Zero(x.size());
 
 	// TODO remove this hack - assumes size(x)==2
-	if(res.v_free[0]==1 && res.v_free[1]==1){
+	if(res.v_free[0]==1 && res.v_free[1]==1)
+	{
 		search = -res.H_free.inverse() * (res.H_free.transpose().inverse()*subvec_w_ind(grad_clamped, res.v_free)) - subvec_w_ind(x, res.v_free);
 	}
 	else if (res.v_free[0]==1){
@@ -188,19 +190,19 @@ boxQPResult boxQP(const MatrixXd &Q, const VectorXd &c, const VectorXd &x0,
 		search(1) = (-res.H_free.inverse() * (res.H_free.transpose().inverse()*subvec_w_ind(grad_clamped, res.v_free)) - subvec_w_ind(x, res.v_free))(0);
 	}
 
-    lineSearchResult linesearch_res = quadclamp_line_search(x, search, Q, c, lower, upper);
-    if(linesearch_res.failed)
-    {
-        res.result = 2;
-        break;
-    }
+  lineSearchResult linesearch_res = quadclamp_line_search(x, search, Q, c, lower, upper);
+  if(linesearch_res.failed)
+  {
+      res.result = 2;
+      break;
+  }
 
-    #ifdef VERBOSE
-      printf("iter %-3d  value % -9.5g |g| %-9.3g  reduction %-9.3g  linesearch %g^%-2d  n_clamped %d\n",
-        iter, linesearch_res.v_opt, grad_norm, oldvalue-linesearch_res.v_opt, stepDec, linesearch_res.n_steps, int(clamped_dims.sum()));
-    #endif
+  #ifdef VERBOSE
+    printf("iter %-3d  value % -9.5g |g| %-9.3g  reduction %-9.3g  linesearch %g^%-2d  n_clamped %d\n",
+      iter, linesearch_res.v_opt, grad_norm, oldvalue-linesearch_res.v_opt, stepDec, linesearch_res.n_steps, int(clamped_dims.sum()));
+  #endif
 
-    // accept candidate
+  // accept candidate
 	x = linesearch_res.x_opt;
 	val = linesearch_res.v_opt;
   }

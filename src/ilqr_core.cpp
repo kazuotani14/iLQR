@@ -6,12 +6,14 @@
 
 double iLQR::init_traj(const VectorXd &x_0, const VecOfVecXd &u_0)
 {
-	//initialize xs and us, return or store initial cost
+	T = u_0.size();
+
+	//initialize xs and us
 	xs.resize(T+1);
 	us.resize(T);
 	x0 = x_0;
 
-	// call forward_pass, get xs, us, cost
+	// call forward_pass to get xs, us, cost
 	double cost_i = forward_pass(x0, u_0);
 	std::cout << "Initial cost: " << cost_i << "\n";
 	cost_s = cost_i;
@@ -53,7 +55,6 @@ double iLQR::init_traj(const VectorXd &x_0, const VecOfVecXd &u_0)
 // Initialize trajectory with control sequence
 void iLQR::generate_trajectory(const VectorXd &x_0, const VecOfVecXd &u0)
 {
-	T = u0.size();
 	init_traj(x_0, u0);
 	generate_trajectory();
 }
@@ -75,9 +76,11 @@ void iLQR::generate_trajectory(const VectorXd &x_0)
 // This assumes that x0, xs, us are initialized
 void iLQR::generate_trajectory()
 {
+	std::cout << "assertions" << std::endl;
 	assert(x0.size()>0);
 	assert(!xs.empty());
 	assert(!us.empty());
+	std::cout << "..." << std::endl;
 
 	VecOfVecXd x_old, u_old;
 
@@ -109,20 +112,23 @@ void iLQR::generate_trajectory()
 		//--------------------------------------------------------------------------
 		//STEP 1: Differentiate dynamics and cost along new trajectory
 
-		auto start = std::chrono::system_clock::now();
+		// auto start = std::chrono::system_clock::now();
 
 		if (flgChange)
 		{
-			compute_derivatives(xs,us);
-			flgChange = 0;
+      get_dynamics_derivatives(xs, us);
+      get_cost_derivatives(xs, us);
+      // get_cost_2nd_derivatives(x, u);
+      get_cost_2nd_derivatives_mt(xs, us, 10);
+      flgChange = 0;
 		}
 		#ifdef VERBOSE
 			cout << "Finished step 1 : compute derivatives." << endl;;
 		#endif
 
-		auto now = std::chrono::system_clock::now();
-		long int elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - start).count();
-		cout << "compute_derivatives took: " << elapsed/1000. << " seconds." << endl;
+		// auto now = std::chrono::system_clock::now();
+		// long int elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - start).count();
+		// cout << "compute_derivatives took: " << elapsed/1000. << " seconds." << endl;
 
 		//--------------------------------------------------------------------------
 		// STEP 2: Backward pass, compute optimal control law and cost-to-go
@@ -278,6 +284,124 @@ void iLQR::generate_trajectory()
 	output_to_csv("ilqr_result.csv");
 
 } //generate_trajectory
+
+// Saves new state and control sequence in xs, us
+//TODO make inputs/outputs explicit here?
+double iLQR::forward_pass(const VectorXd &x0, const VecOfVecXd &u)
+{
+	double total_cost = 0;
+
+	VectorXd x_curr = x0;
+	VectorXd x1;
+	VectorXd u_curr;
+
+	VecOfVecXd x_new(T+1);
+	x_new[0] = x0;
+
+	for(int t=0; t<T; t++)
+	{
+		u_curr = u[t];
+
+		if (K.size()>0)
+		{
+			VectorXd dx = x_new[t] - xs[t];
+			u_curr += K[t]*dx; //apply LQR control gains
+		}
+
+		us[t] = clamp_to_limits(u_curr, model->u_min, model->u_max);
+		x1 = model->integrate_dynamics(x_curr, u_curr, dt);
+		total_cost += model->cost(x_curr,u_curr);
+
+		x_new[t+1] = x1;
+		x_curr = x1;
+	}
+
+	xs = x_new;
+  total_cost += model->final_cost(xs[T]);
+
+	return total_cost;
+}
+
+/*
+ 	INPUTS
+ 	   cx: 2x(T+1)					cu: 2x(T+1)
+ 		 cuu: nxnx(T+1)				cxx: nxnx(T+1)	cuu: 2x2x(T+1)
+ 		 fx: nxnx(T+1)				fu: nx2x(T+1)		fxx: none
+ 		 fxu: None						fuu: none				u: 2xT
+    OUTPUTS
+ 	   Vx: nx(T+1)			Vxx: nxnx(T+1)			k:mxT
+ 	   K: mxnxT 				dV: 2x1
+ 		 diverge - returns 0 if it doesn't diverge, timestep where it diverges otherwise
+*/
+//TODO make inputs/outputs explicit here?
+int iLQR::backward_pass()
+{
+	int n = model->x_dims;
+	int m = model->u_dims;
+
+	//cost-to-go at end
+	Vx[T] = cx[T];
+	Vxx[T] = cxx[T];
+
+	VectorXd Qx(n), Qu(m);
+	MatrixXd Qxx(n,n), Qux(m,n), Quu(m,m);
+	VectorXd k_i(m);
+	MatrixXd K_i(m,n);
+	dV.setZero();
+
+	for (int i=(T-1); i>=0; i--) // back up from end of trajectory
+	{
+		Qx  = cx[i] + (fx[i].transpose() * Vx[i+1]);
+		Qu  = cu[i] + (fu[i].transpose() * Vx[i+1]);
+		Qxx = cxx[i] + (fx[i].transpose() * Vxx[i+1] * fx[i]);
+		Qux = cxu[i].transpose() + (fu[i].transpose() * Vxx[i+1] * fx[i]);
+	    Quu = cuu[i] + (fu[i].transpose() * Vxx[i+1] * fu[i]);
+
+	    MatrixXd Vxx_reg = Vxx[i+1];
+		MatrixXd Qux_reg = cxu[i].transpose() + (fu[i].transpose() * Vxx_reg * fx[i]);
+		MatrixXd QuuF = cuu[i] + (fu[i].transpose() * Vxx_reg * fu[i]) + (lambda*MatrixXd::Identity(2,2));
+
+		VectorXd lower = model->u_min - us[i];
+		VectorXd upper = model->u_max - us[i];
+
+		boxQPResult res = boxQP(QuuF, Qu, k[std::min(i+1,T-1)], lower, upper);
+
+		int result = res.result;
+		k_i = res.x_opt;
+		MatrixXd R = res.H_free;
+		VectorXd v_free = res.v_free;
+
+		if(result < 1) return i;
+
+		K_i.setZero();
+		if (v_free.any())
+		{
+			MatrixXd Lfree(m,n);
+			Lfree = -R.inverse() * (R.transpose().inverse()*rows_w_ind(Qux_reg, v_free));
+
+			int row_i = 0;
+			for(int k=0; k<v_free.size(); k++)
+			{
+				if(v_free(k))
+					K_i.row(k) = Lfree.row(row_i++);
+			}
+		}
+
+		// update cost-to-go approximation
+		dV(0) += k_i.transpose()*Qu;
+		dV(1) += 0.5*k_i.transpose()*Quu*k_i;
+
+		Vx[i]  = Qx  + K_i.transpose()*Quu*k_i + K_i.transpose()*Qu + Qux.transpose()*k_i;
+		Vxx[i] = Qxx + K_i.transpose()*Quu*K_i + K_i.transpose()*Qux + Qux.transpose()*K_i;
+		Vxx[i] = 0.5 * (Vxx[i] + Vxx[i].transpose());
+
+	    // save controls/gains
+	    k[i]     = k_i;
+    	K[i]     = K_i;
+	}
+
+	return 0;
+}
 
 VecOfVecXd iLQR::add_bias_to_u(const VecOfVecXd &u, const VecOfVecXd &l, const double alpha)
 {

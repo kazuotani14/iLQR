@@ -3,8 +3,11 @@
 
 #include <vector>
 #include <algorithm>
+#include <string>
 #include <iostream>
 #include <cstdio>
+#include <functional>
+#include <cmath>
 #include <math.h>
 #include <time.h>
 #include <ctime>
@@ -28,7 +31,7 @@ typedef std::vector<MatrixXd, Eigen::aligned_allocator<MatrixXd>>  VecOfMatXd;
 
 //---------------------------------
 // Math helper functions
-//---------------------------------
+
 const double pi = M_PI;
 
 template<typename T>

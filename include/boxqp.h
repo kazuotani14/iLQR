@@ -47,9 +47,9 @@ double quadCost(const MatrixXd& Q, const VectorXd& c, const VectorXd& x);
 
 VectorXd clamp_to_limits(const VectorXd &x, const VectorXd& lower, const VectorXd& upper);
 
-lineSearchResult quadclamp_line_search(const VectorXd x0, const VectorXd search_dir,
-									   const MatrixXd Q, const VectorXd c,
-									   const VectorXd lower, const VectorXd upper);
+lineSearchResult quadclamp_line_search(const VectorXd& x0, const VectorXd& search_dir,
+									   const MatrixXd& Q, const VectorXd& c,
+									   const VectorXd& lower, const VectorXd& upper);
 
 
 boxQPResult boxQP(const MatrixXd &Q, const VectorXd &c, const VectorXd &x0,

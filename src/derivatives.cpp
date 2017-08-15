@@ -8,6 +8,7 @@
 
 using namespace std::placeholders;
 
+// Note: this is not used in main ilqr anymore, mostly just here cuz tests use it
 // Given a trajectory {x(t),u(t)} from forward pass, compute deriviatives along it
 void iLQR::compute_derivatives(const VecOfVecXd& x, const VecOfVecXd& u)
 {
@@ -16,10 +17,6 @@ void iLQR::compute_derivatives(const VecOfVecXd& x, const VecOfVecXd& u)
   // get_cost_2nd_derivatives(x, u);
   get_cost_2nd_derivatives_mt(x, u, 10);
 }
-
-
-// -----------------
-// Derivative computation
 
 // Updates fx, fu
 void iLQR::get_dynamics_derivatives(const VecOfVecXd& x, const VecOfVecXd& u)

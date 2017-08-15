@@ -10,14 +10,9 @@ set(CMAKE_CXX_FLAGS "-O3 -Wall -Wextra")
 
 # file(GLOB_RECURSE Foo_SOURCES "src/*.cpp")
 
-set (ILQR_SOURCES "src/double_integrator.cpp"
-                  "src/ilqr_core.cpp"
-                  "src/forward_pass.cpp"
+set (ILQR_SOURCES "src/ilqr_core.cpp"
                   "src/derivatives.cpp"
-                  "src/finite_diff.cpp"
-                  "src/boxqp.cpp"
-                  "src/eigen_helpers.cpp"
-                  "src/backward_pass.cpp")
+                  "src/boxqp.cpp")
 
 file(GLOB_RECURSE ILQR_HEADERS "include/*.h")
 
@@ -91,8 +86,8 @@ endmacro(add_gtest)
 
 add_gtest(gtest_test "test/test_gtest.cpp")
 
-add_gtest(deriv_test "test/test_finite_diff.cpp" "src/finite_diff.cpp")
-add_gtest(boxqp_test "test/test_boxqp.cpp" "src/boxqp.cpp" "src/eigen_helpers.cpp")
-add_gtest(double_int_test "test/test_doubleintegrator.cpp" "src/double_integrator.cpp")
+add_gtest(deriv_test "test/test_finite_diff.cpp")
+add_gtest(boxqp_test "test/test_boxqp.cpp" "src/boxqp.cpp")
+add_gtest(double_int_test "test/test_doubleintegrator.cpp")
 add_gtest(ilqr_deriv_test "test/test_ilqr_derivatives.cpp" ${ILQR_SOURCES})
 add_gtest(ilqr_forward_test "test/test_ilqr_forward_pass.cpp" ${ILQR_SOURCES})
