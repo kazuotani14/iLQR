@@ -179,6 +179,7 @@ boxQPResult boxQP(const MatrixXd &Q, const VectorXd &c, const VectorXd &x0,
     VectorXd search = VectorXd::Zero(x.size());
 
   // TODO remove this hack - assumes size(x)==2
+  //what we want is Qfree = Q(v_free, v_ free)
   if(res.v_free[0]==1 && res.v_free[1]==1)
   {
     search = -res.H_free.inverse() * (res.H_free.transpose().inverse()*subvec_w_ind(grad_clamped, res.v_free)) - subvec_w_ind(x, res.v_free);
