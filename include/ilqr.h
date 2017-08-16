@@ -77,16 +77,16 @@ private:
   double get_gradient_norm(const VecOfVecXd& l, const VecOfVecXd& u);
 
   void compute_derivatives(const VecOfVecXd &x, const VecOfVecXd &u);
-  void get_dynamics_derivatives(const VecOfVecXd &x, const VecOfVecXd &u);
-  void get_cost_derivatives(const VecOfVecXd &x, const VecOfVecXd &u);
-  void get_cost_2nd_derivatives(const VecOfVecXd &x, const VecOfVecXd &u);
+  void get_dynamics_derivatives(const VecOfVecXd &x, const VecOfVecXd &u, VecOfMatXd& f_x, VecOfMatXd& f_u);
+  void get_cost_derivatives(const VecOfVecXd &x, const VecOfVecXd &u, VecOfVecXd& c_x, VecOfVecXd& c_u);
+  void get_cost_2nd_derivatives(const VecOfVecXd &x, const VecOfVecXd &u, VecOfMatXd& c_xx, VecOfMatXd& c_xu, VecOfMatXd& c_uu);
 
   //multi-threaded version - about 2 to 3 times faster
-  void get_cost_2nd_derivatives_mt(const VecOfVecXd &x, const VecOfVecXd &u, int n_threads_per);
+  void get_cost_2nd_derivatives_mt(const VecOfVecXd &x, const VecOfVecXd &u, VecOfMatXd& c_xx, VecOfMatXd& c_xu, VecOfMatXd& c_uu, int n_threads_per);
 
-  void calculate_cxx(const VecOfVecXd &x, const VecOfVecXd &u, int start_T, int end_T);
-  void calculate_cxu(const VecOfVecXd &x, const VecOfVecXd &u, int start_T, int end_T);
-  void calculate_cuu(const VecOfVecXd &x, const VecOfVecXd &u, int start_T, int end_T);
+  void calculate_cxx(const VecOfVecXd &x, const VecOfVecXd &u, VecOfMatXd& c_xx, int start_T, int end_T);
+  void calculate_cxu(const VecOfVecXd &x, const VecOfVecXd &u, VecOfMatXd& c_xu, int start_T, int end_T);
+  void calculate_cuu(const VecOfVecXd &x, const VecOfVecXd &u, VecOfMatXd& c_uu, int start_T, int end_T);
 
   FRIEND_TEST(ILQRSetup, dDynamicsTest);
   FRIEND_TEST(ILQRSetup, dCostTest);

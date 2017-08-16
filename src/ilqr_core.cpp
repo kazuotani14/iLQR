@@ -116,10 +116,10 @@ void iLQR::generate_trajectory()
 
     if (flgChange)
     {
-      get_dynamics_derivatives(xs, us);
-      get_cost_derivatives(xs, us);
-      // get_cost_2nd_derivatives(x, u);
-      get_cost_2nd_derivatives_mt(xs, us, 10);
+      get_dynamics_derivatives(xs, us, fx, fu);
+      get_cost_derivatives(xs, us, cx, cu);
+      // get_cost_2nd_derivatives(x, u, cxx, cxu, cuu);
+      get_cost_2nd_derivatives_mt(xs, us, cxx, cxu, cuu, 10);
       flgChange = 0;
     }
     #ifdef VERBOSE
@@ -285,6 +285,7 @@ void iLQR::generate_trajectory()
 
 } //generate_trajectory
 
+
 // Saves new state and control sequence in xs, us
 //TODO make inputs/outputs explicit here?
 double iLQR::forward_pass(const VectorXd &x0, const VecOfVecXd &u)
@@ -321,6 +322,7 @@ double iLQR::forward_pass(const VectorXd &x0, const VecOfVecXd &u)
 
   return total_cost;
 }
+
 
 /*
    INPUTS
@@ -376,7 +378,7 @@ int iLQR::backward_pass()
     K_i.setZero();
     if (v_free.any())
     {
-      MatrixXd Lfree(m,n);
+      MatrixXd Lfree;
       Lfree = -R.inverse() * (R.transpose().inverse()*rows_w_ind(Qux_reg, v_free));
 
       int row_i = 0;
@@ -403,6 +405,7 @@ int iLQR::backward_pass()
   return 0;
 }
 
+
 VecOfVecXd iLQR::add_bias_to_u(const VecOfVecXd &u, const VecOfVecXd &l, const double alpha)
 {
   VecOfVecXd new_u = u;
@@ -411,6 +414,7 @@ VecOfVecXd iLQR::add_bias_to_u(const VecOfVecXd &u, const VecOfVecXd &l, const d
   }
   return new_u;
 }
+
 
 // Replaces this line from matlab: g_norm = mean(max(abs(l) ./ (abs(u)+1), [], 1));
 double iLQR::get_gradient_norm(const VecOfVecXd& l, const VecOfVecXd& u)
@@ -425,6 +429,7 @@ double iLQR::get_gradient_norm(const VecOfVecXd& l, const VecOfVecXd& u)
   double average = std::accumulate(vals.begin(), vals.end(), 0.0)/vals.size();
   return average;
 }
+
 
 void iLQR::output_to_csv(const std::string filename)
 {

@@ -144,23 +144,14 @@ boxQPResult boxQP(const MatrixXd &Q, const VectorXd &c, const VectorXd &x0,
     // Factorize if clamped dimensions have changed
     if (iter==0 || (old_clamped_dims-clamped_dims).sum() != 0)
     {
-      int n_free = res.v_free.sum();
       MatrixXd Qfree;
-
-      // TODO remove this hard-coded check - this assumes inputs to boxQP will always be size 2!!
-    // what we want is: Qfree = Q(v_free, v_  free)
-      if (res.v_free[0] == 1)
-      {
-        Qfree = Q.block(0, 0, n_free, n_free);
-      }
-      else
-      {
-        Qfree = Q.block(1, 1, n_free, n_free);
-      }
+      Qfree = extract_bool_rowsandcols(Q, res.v_free);
 
       Eigen::LLT<MatrixXd> choleskyOfQfree(Qfree); // Cholesky decomposition
-    if(choleskyOfQfree.matrixL().size() > 0) // I don't know why this happens...
+      if(choleskyOfQfree.matrixL().size() > 0) // I'm not sure why this happens...
+      {
         res.H_free = choleskyOfQfree.matrixL().transpose();
+      }
 
       nfactors++;
     }

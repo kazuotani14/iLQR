@@ -12,14 +12,14 @@ using namespace std::placeholders;
 // Given a trajectory {x(t),u(t)} from forward pass, compute deriviatives along it
 void iLQR::compute_derivatives(const VecOfVecXd& x, const VecOfVecXd& u)
 {
-  get_dynamics_derivatives(x, u);
-  get_cost_derivatives(x, u);
-  // get_cost_2nd_derivatives(x, u);
-  get_cost_2nd_derivatives_mt(x, u, 10);
+  get_dynamics_derivatives(x, u, fx, fu);
+  get_cost_derivatives(x, u, cx, cu);
+  // get_cost_2nd_derivatives(x, u, cxx, cxu, cuu);
+  get_cost_2nd_derivatives_mt(x, u, cxx, cxu, cuu, 10);
 }
 
 // Updates fx, fu
-void iLQR::get_dynamics_derivatives(const VecOfVecXd& x, const VecOfVecXd& u)
+void iLQR::get_dynamics_derivatives(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& f_x, VecOfMatXd& f_u)
 {
   for (int t=0; t<T; t++)
   {
@@ -30,13 +30,13 @@ void iLQR::get_dynamics_derivatives(const VecOfVecXd& x, const VecOfVecXd& u)
     std::function<VectorXd(VectorXd)> dyn_x = std::bind(&Model::integrate_dynamics, model, _1, u[t], dt);
     std::function<VectorXd(VectorXd)> dyn_u = std::bind(&Model::integrate_dynamics, model, x[t], _1, dt);
 
-    fx[t] = finite_diff_vec2vec(dyn_x, x[t], 4);
-    fu[t] = finite_diff_vec2vec(dyn_u, u[t], 4);
+    f_x[t] = finite_diff_vec2vec(dyn_x, x[t], 4);
+    f_u[t] = finite_diff_vec2vec(dyn_u, u[t], 4);
   }
 }
 
 // Updates cx, cu
-void iLQR::get_cost_derivatives(const VecOfVecXd& x, const VecOfVecXd& u)
+void iLQR::get_cost_derivatives(const VecOfVecXd& x, const VecOfVecXd& u, VecOfVecXd& c_x, VecOfVecXd& c_u)
 {
   for (int t=0; t<T+1; t++)
   {
@@ -55,20 +55,20 @@ void iLQR::get_cost_derivatives(const VecOfVecXd& x, const VecOfVecXd& u)
 
     if(t<T)
     {
-      cx[t] = finite_diff_vec2scalar(cost_x, x[t]);
-      cu[t] = finite_diff_vec2scalar(cost_u, ut);
+      c_x[t] = finite_diff_vec2scalar(cost_x, x[t]);
+      c_u[t] = finite_diff_vec2scalar(cost_u, ut);
     }
     else
     {
-      cx[t] = finite_diff_vec2scalar(cost_f, x[t]);
-      cu[t].resize(2);
-      cu[t].setZero();
+      c_x[t] = finite_diff_vec2scalar(cost_f, x[t]);
+      c_u[t].resize(2);
+      c_u[t].setZero();
     }
   }
 }
 
 // Update cxx, cxu, cuu
-void iLQR::get_cost_2nd_derivatives(const VecOfVecXd& x, const VecOfVecXd& u)
+void iLQR::get_cost_2nd_derivatives(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& c_xx, VecOfMatXd& c_xu, VecOfMatXd& c_uu)
 {
   VectorXd pp, pm, mp, mm; //plus-plus, plus-minus, ....
 
@@ -78,17 +78,17 @@ void iLQR::get_cost_2nd_derivatives(const VecOfVecXd& x, const VecOfVecXd& u)
   int m = u[0].size();
   for (int t=0; t<T+1; t++)
   {
-    cxx[t].resize(n,n);
-    cxu[t].resize(n,m);
-    cuu[t].resize(m,m);
+    c_xx[t].resize(n,n);
+    c_xu[t].resize(n,m);
+    c_uu[t].resize(m,m);
   }
 
-  calculate_cxx(x, u, 0, T+1);
-  calculate_cxu(x, u, 0, T+1);
-  calculate_cuu(x, u, 0, T+1);
+  calculate_cxx(x, u, c_xx, 0, T+1);
+  calculate_cxu(x, u, c_xu, 0, T+1);
+  calculate_cuu(x, u, c_uu, 0, T+1);
 }
 
-void iLQR::get_cost_2nd_derivatives_mt(const VecOfVecXd& x, const VecOfVecXd& u, int n_threads_per)
+void iLQR::get_cost_2nd_derivatives_mt(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& c_xx, VecOfMatXd& c_xu, VecOfMatXd& c_uu, int n_threads_per)
 {
   assert((T+1)%n_threads_per == 0);
 
@@ -97,9 +97,9 @@ void iLQR::get_cost_2nd_derivatives_mt(const VecOfVecXd& x, const VecOfVecXd& u,
   int m = u[0].size();
   for (int t=0; t<T+1; t++)
   {
-    cxx[t].resize(n,n);
-    cxu[t].resize(n,m);
-    cuu[t].resize(m,m);
+    c_xx[t].resize(n,n);
+    c_xu[t].resize(n,m);
+    c_uu[t].resize(m,m);
   }
 
   std::function<double(VectorXd, VectorXd)> c = [this](VectorXd x_v, VectorXd u_v){return model->cost(x_v,u_v);};
@@ -111,15 +111,15 @@ void iLQR::get_cost_2nd_derivatives_mt(const VecOfVecXd& x, const VecOfVecXd& u,
     int start_T = (T+1)/n_threads_per * i;
     int end_T = (T+1)/n_threads_per * (i+1);
 
-    threads.emplace_back(std::bind(&iLQR::calculate_cxx, this, x, u, start_T, end_T));
-    threads.emplace_back(std::bind(&iLQR::calculate_cxu, this, x, u, start_T, end_T));
-    threads.emplace_back(std::bind(&iLQR::calculate_cuu, this, x, u, start_T, end_T));
+    threads.emplace_back(std::bind(&iLQR::calculate_cxx, this, x, u, c_xx, start_T, end_T));
+    threads.emplace_back(std::bind(&iLQR::calculate_cxu, this, x, u, c_xu, start_T, end_T));
+    threads.emplace_back(std::bind(&iLQR::calculate_cuu, this, x, u, c_uu, start_T, end_T));
   }
 
   for(std::thread& t : threads) t.join();
 }
 
-void iLQR::calculate_cxx(const VecOfVecXd& x, const VecOfVecXd& u, int start_T, int end_T)
+void iLQR::calculate_cxx(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& c_xx, int start_T, int end_T)
 {
   std::function<double(VectorXd, VectorXd)> c = [this](VectorXd x_v, VectorXd u_v){return model->cost(x_v,u_v);};
 
@@ -143,13 +143,13 @@ void iLQR::calculate_cxx(const VecOfVecXd& x, const VecOfVecXd& u, int start_T, 
         mp(j) += eps2;
         mm(i) -= eps2;
         mm(j) -= eps2;
-        cxx[t](i,j) = cxx[t](j,i) = (c(pp, ut) - c(mp, ut) - c(pm, ut) + c(mm, ut)) / (4*sqr(eps2));
+        c_xx[t](i,j) = cxx[t](j,i) = (c(pp, ut) - c(mp, ut) - c(pm, ut) + c(mm, ut)) / (4*sqr(eps2));
       }
     }
   }
 }
 
-void iLQR::calculate_cxu(const VecOfVecXd& x, const VecOfVecXd& u, int start_T, int end_T)
+void iLQR::calculate_cxu(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& c_xu, int start_T, int end_T)
 {
   std::function<double(VectorXd, VectorXd)> c = [this](VectorXd x_v, VectorXd u_v){return model->cost(x_v,u_v);};
 
@@ -171,13 +171,13 @@ void iLQR::calculate_cxu(const VecOfVecXd& x, const VecOfVecXd& u, int start_T, 
         mx(i) -= eps2;
         pu(j) += eps2;
         mu(j) -= eps2;
-        cxu[t](i,j) = (c(px, pu) - c(mx, pu) - c(px, mu) + c(mx, mu)) / (4*sqr(eps2));
+        c_xu[t](i,j) = (c(px, pu) - c(mx, pu) - c(px, mu) + c(mx, mu)) / (4*sqr(eps2));
       }
     }
   }
 }
 
-void iLQR::calculate_cuu(const VecOfVecXd& x, const VecOfVecXd& u, int start_T, int end_T)
+void iLQR::calculate_cuu(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& c_uu, int start_T, int end_T)
 {
   std::function<double(VectorXd, VectorXd)> c = [this](VectorXd x_v, VectorXd u_v){return model->cost(x_v,u_v);};
 
@@ -201,7 +201,7 @@ void iLQR::calculate_cuu(const VecOfVecXd& x, const VecOfVecXd& u, int start_T, 
         mp(j) += eps2;
         mm(i) -= eps2;
         mm(j) -= eps2;
-        cuu[t](i,j) = cuu[t](j,i) = (c(x[t], pp) - c(x[t], mp) - c(x[t], pm) + c(x[t], mm)) / (4*sqr(eps2));
+        c_uu[t](i,j) = cuu[t](j,i) = (c(x[t], pp) - c(x[t], mp) - c(x[t], pm) + c(x[t], mm)) / (4*sqr(eps2));
       }
     }
   }
