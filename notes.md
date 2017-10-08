@@ -28,5 +28,7 @@ _Pros/cons vs other trajectory optimization algorithms_
     * two-link arm
 * remove error codes - use enums
 * python script for plotting output
-* integrate cost for change in control input
+* add general features:
+    * cost for change in control input
+    * repulsor from undesired states (bounds, obstacles) - log or repulsive field?
 * additional documentation for future me

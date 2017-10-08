@@ -43,6 +43,9 @@ struct boxQPResult
   MatrixXd H_free;
 };
 
+boxQPResult boxQP(const MatrixXd &Q, const VectorXd &c, const VectorXd &x0,
+                  const VectorXd& lower, const VectorXd& upper);
+
 VectorXd clamp_to_limits(const VectorXd &x, const VectorXd& lower, const VectorXd& upper);
 
 double quadCost(const MatrixXd& Q, const VectorXd& c, const VectorXd& x);
@@ -50,10 +53,6 @@ double quadCost(const MatrixXd& Q, const VectorXd& c, const VectorXd& x);
 lineSearchResult quadclamp_line_search(const VectorXd& x0, const VectorXd& search_dir,
                      const MatrixXd& Q, const VectorXd& c,
                      const VectorXd& lower, const VectorXd& upper);
-
-
-boxQPResult boxQP(const MatrixXd &Q, const VectorXd &c, const VectorXd &x0,
-                  const VectorXd& lower, const VectorXd& upper);
 
 inline bool approx_eq(double a, double b)
 {
