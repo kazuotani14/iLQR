@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include <cmath>
+#include <memory>
 #include "double_integrator.h"
 
 using Eigen::VectorXd;
