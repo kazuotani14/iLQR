@@ -10,6 +10,8 @@ set(CMAKE_CXX_FLAGS "-O3 -Wall -Wextra")
 
 # file(GLOB_RECURSE Foo_SOURCES "src/*.cpp")
 
+find_package(Threads REQUIRED)
+
 set (ILQR_SOURCES "src/ilqr_core.cpp"
                   "src/derivatives.cpp"
                   "src/boxqp.cpp")
@@ -25,6 +27,7 @@ list(REMOVE_DUPLICATES ILQR_INCLUDE_DIRS)
 
 include_directories(${ILQR_INCLUDE_DIRS})
 add_executable (run_iLQR "src/run_ilqr.cpp" ${ILQR_SOURCES})
+target_link_libraries(run_iLQR Threads::Threads)
 
 
 ###
