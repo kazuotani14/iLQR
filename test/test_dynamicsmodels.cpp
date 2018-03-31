@@ -2,6 +2,7 @@
 #include <cmath>
 #include <memory>
 #include "double_integrator.h"
+#include "acrobot.h"
 
 using Eigen::VectorXd;
 static const double eq_tol = 1e-6;
@@ -23,7 +24,7 @@ public:
   }
   //virtual void TearDown()   {}
 
-  std::shared_ptr<DoubleIntegrator> model;
+  std::shared_ptr<Model> model;
   VectorXd x, u;
   double dt;
 };
@@ -57,6 +58,38 @@ TEST(DoubleIntegratorTest, CostTest)
   double cost = model.cost(x, u);
   EXPECT_TRUE(std::abs(cost-2.682) < 0.001);
 }
+
+class AcrobotSetup : public ::testing::Test
+{
+public:
+  virtual void SetUp() {
+    x = VectorXd(4);
+    u = VectorXd(1);
+    dt = 0.05;
+    x << 0.0, 0.0, 0.0, 0.0;
+    u << 0.1;
+
+    model.reset(new Acrobot());
+  }
+  //virtual void TearDown()   {}
+
+  std::shared_ptr<Model> model;
+  VectorXd x, u;
+  double dt;
+};
+
+TEST_F(AcrobotSetup, DxTest)
+{
+  VectorXd dx = model->dynamics(x, u);
+  VectorXd x1 = model->integrate_dynamics(x, u, dt);
+  // VectorXd expected = x + dt*dx;
+
+  std::cout << "cost: " << model->cost(x, u) << std::endl;
+
+  std::cout << "dx: " << dx.transpose() << std::endl;
+  std::cout << "x1: " << x1.transpose() << std::endl;
+}
+
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);

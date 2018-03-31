@@ -3,6 +3,7 @@ project (iLQR)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS "-O3 -Wall -Wextra")
+# set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall")
 
 ###
 # My stuff
@@ -91,6 +92,6 @@ add_gtest(gtest_test "test/test_gtest.cpp")
 
 add_gtest(deriv_test "test/test_finite_diff.cpp")
 add_gtest(boxqp_test "test/test_boxqp.cpp" "src/boxqp.cpp")
-add_gtest(double_int_test "test/test_doubleintegrator.cpp")
+add_gtest(dynamics_models_test "test/test_dynamicsmodels.cpp")
 add_gtest(ilqr_deriv_test "test/test_ilqr_derivatives.cpp" ${ILQR_SOURCES})
 add_gtest(ilqr_forward_test "test/test_ilqr_forward_pass.cpp" ${ILQR_SOURCES})

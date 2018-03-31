@@ -3,8 +3,7 @@
 
 #include "common.h"
 
-class Model
-{
+class Model {
 public:
   virtual VectorXd dynamics(const VectorXd& x, const VectorXd& u) = 0;
   virtual VectorXd integrate_dynamics(const VectorXd& x, const VectorXd& u, double dt) = 0;
