@@ -8,10 +8,9 @@
 
 using namespace std::placeholders;
 
-// Note: this is not used in main ilqr anymore, mostly just here cuz tests use it
+// Note: this is not used in main ilqr anymore, mostly just here because tests use it
 // Given a trajectory {x(t),u(t)} from forward pass, compute deriviatives along it
-void iLQR::compute_derivatives(const VecOfVecXd& x, const VecOfVecXd& u)
-{
+void iLQR::compute_derivatives(const VecOfVecXd& x, const VecOfVecXd& u) {
   get_dynamics_derivatives(x, u, fx, fu);
   get_cost_derivatives(x, u, cx, cu);
   // get_cost_2nd_derivatives(x, u, cxx, cxu, cuu);
@@ -19,10 +18,8 @@ void iLQR::compute_derivatives(const VecOfVecXd& x, const VecOfVecXd& u)
 }
 
 // Updates fx, fu
-void iLQR::get_dynamics_derivatives(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& f_x, VecOfMatXd& f_u)
-{
-  for (int t=0; t<T; t++)
-  {
+void iLQR::get_dynamics_derivatives(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& f_x, VecOfMatXd& f_u) {
+  for (int t=0; t<T; t++) {
     //TODO figure out how to avoid copying
     VectorXd xi = x[t];
     VectorXd ui = u[t];
@@ -36,32 +33,26 @@ void iLQR::get_dynamics_derivatives(const VecOfVecXd& x, const VecOfVecXd& u, Ve
 }
 
 // Updates cx, cu
-void iLQR::get_cost_derivatives(const VecOfVecXd& x, const VecOfVecXd& u, VecOfVecXd& c_x, VecOfVecXd& c_u)
-{
-  for (int t=0; t<T+1; t++)
-  {
-    Vector2d ut;
-    if(t<T)
-    {
-      ut = u[t];
-    }
-    else
-    {
-      ut = Vector2d::Zero();
-    }
+void iLQR::get_cost_derivatives(const VecOfVecXd& x, const VecOfVecXd& u, VecOfVecXd& c_x, VecOfVecXd& c_u) {
+  int u_dims = u[0].size();
+
+  for (int t=0; t<T+1; t++) {
+    VectorXd ut(u_dims);
+    if(t<T) ut = u[t];
+    else ut.setZero();
+
     std::function<double(VectorXd)> cost_x = std::bind(&Model::cost, model, _1, ut);
     std::function<double(VectorXd)> cost_u = std::bind(&Model::cost, model, x[t], _1);
     std::function<double(VectorXd)> cost_f = std::bind(&Model::final_cost, model, _1);
 
-    if(t<T)
-    {
+    if(t<T) {
       c_x[t] = finite_diff_vec2scalar(cost_x, x[t]);
       c_u[t] = finite_diff_vec2scalar(cost_u, ut);
+      // std::cout << "cost derivatives: " << c_x[t] << " , " << c_u[t] << std::endl;
     }
-    else
-    {
+    else {
       c_x[t] = finite_diff_vec2scalar(cost_f, x[t]);
-      c_u[t].resize(2);
+      c_u[t].resize(u_dims);
       c_u[t].setZero();
     }
   }
@@ -74,29 +65,28 @@ void iLQR::get_cost_2nd_derivatives(const VecOfVecXd& x, const VecOfVecXd& u, Ve
 
   std::function<double(VectorXd, VectorXd)> c = [this](VectorXd x_v, VectorXd u_v){return model->cost(x_v,u_v);};
 
-  int n = x[0].size();
-  int m = u[0].size();
-  for (int t=0; t<T+1; t++)
-  {
-    c_xx[t].resize(n,n);
-    c_xu[t].resize(n,m);
-    c_uu[t].resize(m,m);
-  }
+  int x_dims = x[0].size();
+  int u_dims = u[0].size();
+  for (int t=0; t<T+1; t++) {
+    c_xx[t].resize(x_dims, x_dims);
+    c_xu[t].resize(x_dims, u_dims);
+    c_uu[t].resize(u_dims, u_dims); // TODO why is this calculated up to T? shouldn't it end at T-1?
+  } 
 
   calculate_cxx(x, u, c_xx, 0, T+1);
   calculate_cxu(x, u, c_xu, 0, T+1);
   calculate_cuu(x, u, c_uu, 0, T+1);
 }
 
-void iLQR::get_cost_2nd_derivatives_mt(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& c_xx, VecOfMatXd& c_xu, VecOfMatXd& c_uu, int n_threads_per)
+void iLQR::get_cost_2nd_derivatives_mt(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& c_xx, 
+                                       VecOfMatXd& c_xu, VecOfMatXd& c_uu, int n_threads_per)
 {
   assert((T+1)%n_threads_per == 0);
 
   //Setup
   int n = x[0].size();
   int m = u[0].size();
-  for (int t=0; t<T+1; t++)
-  {
+  for (int t=0; t<T+1; t++) {
     c_xx[t].resize(n,n);
     c_xu[t].resize(n,m);
     c_uu[t].resize(m,m);
@@ -119,17 +109,18 @@ void iLQR::get_cost_2nd_derivatives_mt(const VecOfVecXd& x, const VecOfVecXd& u,
   for(std::thread& t : threads) t.join();
 }
 
-void iLQR::calculate_cxx(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& c_xx, int start_T, int end_T)
-{
+void iLQR::calculate_cxx(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& c_xx, int start_T, int end_T) {
   std::function<double(VectorXd, VectorXd)> c = [this](VectorXd x_v, VectorXd u_v){return model->cost(x_v,u_v);};
+  std::function<double(VectorXd)> cf = std::bind(&Model::final_cost, model, _1);
 
   VectorXd pp, pm, mp, mm; //plus-plus, plus-minus, ....
 
   int n = x[0].size();
-  for(int t=start_T; t<end_T; t++)
-  {
-    Vector2d ut;
-    if(t==T) ut << 0., 0.;
+  int u_dims = u[0].size();
+  for(int t=start_T; t<end_T; t++) {
+
+    VectorXd ut(u_dims);
+    if(t==T) ut.setZero();
     else ut = u[t];
 
     for (int i=0; i<n; i++){
@@ -143,7 +134,13 @@ void iLQR::calculate_cxx(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& c
         mp(j) += eps2;
         mm(i) -= eps2;
         mm(j) -= eps2;
-        c_xx[t](i,j) = cxx[t](j,i) = (c(pp, ut) - c(mp, ut) - c(pm, ut) + c(mm, ut)) / (4*sqr(eps2));
+
+        if(t<T) {
+          c_xx[t](i,j) = cxx[t](j,i) = (c(pp, ut) - c(mp, ut) - c(pm, ut) + c(mm, ut)) / (4*sqr(eps2));
+        }
+        else {
+          c_xx[t](i,j) = cxx[t](j,i) = (cf(pp) - cf(mp) - cf(pm) + cf(mm)) / (4*sqr(eps2));
+        }
       }
     }
   }
@@ -152,26 +149,32 @@ void iLQR::calculate_cxx(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& c
 void iLQR::calculate_cxu(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& c_xu, int start_T, int end_T)
 {
   std::function<double(VectorXd, VectorXd)> c = [this](VectorXd x_v, VectorXd u_v){return model->cost(x_v,u_v);};
+  std::function<double(VectorXd)> cf = std::bind(&Model::final_cost, model, _1);
 
   VectorXd px, mx, pu, mu;
 
-  int n = x[0].size();
-  int m = u[0].size();
+  int x_dims = x[0].size();
+  int u_dims = u[0].size();
   for(int t=start_T; t<end_T; t++)
   {
-    Vector2d ut;
-    if(t==T) ut << 0., 0.;
+    VectorXd ut(u_dims);
+    if(t==T) ut.setZero();
     else ut = u[t];
 
-    for (int i=0; i<n; i++){
-      for (int j=0; j<m; j++){
+    for (int i=0; i<x_dims; i++) {
+      for (int j=0; j<u_dims; j++) {
         px = mx = x[t];
         pu = mu = ut;
         px(i) += eps2;
         mx(i) -= eps2;
         pu(j) += eps2;
         mu(j) -= eps2;
-        c_xu[t](i,j) = (c(px, pu) - c(mx, pu) - c(px, mu) + c(mx, mu)) / (4*sqr(eps2));
+        if(t<T) {
+          c_xu[t](i,j) = (c(px, pu) - c(mx, pu) - c(px, mu) + c(mx, mu)) / (4*sqr(eps2));
+        }
+        else {
+          c_xu[t](i,j) = (cf(px) - cf(mx) - cf(px) + cf(mx)) / (4*sqr(eps2));
+        }
       }
     }
   }
@@ -183,15 +186,14 @@ void iLQR::calculate_cuu(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& c
 
   VectorXd pp, pm, mp, mm; //plus-plus, plus-minus, ....
 
-  int m = u[0].size();
-  for(int t=start_T; t<end_T; t++)
-  {
-    Vector2d ut;
-    if(t==T) ut << 0., 0.;
+  int u_dims = u[0].size();
+  for(int t=start_T; t<end_T; t++) {
+    VectorXd ut(u_dims);
+    if(t==T) ut.setZero();
     else ut = u[t];
 
-    for (int i=0; i<m; i++){
-      for (int j=i; j<m; j++){
+    for (int i=0; i<u_dims; i++) {
+      for (int j=i; j<u_dims; j++) {
         pp = pm = mp = mm = ut;
         pp(i) += eps2;
         pp(j) += eps2;

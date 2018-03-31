@@ -11,7 +11,7 @@
 
 #include "gtest/gtest_prod.h"
 
-static const int maxIter = 10;
+static const int maxIter = 100;
 static const double tolFun = 1e-6;
 static const double tolGrad = 1e-6;
 static double lambda = 1;
@@ -25,8 +25,7 @@ static std::vector<double> alpha_vec = {1.0000, 0.5012, 0.2512, 0.1259, 0.0631, 
 static Eigen::Map<VectorXd> Alpha(alpha_vec.data(), alpha_vec.size());
 
 
-class iLQR
-{
+class iLQR {
 public:
   iLQR(Model* p_dyn, double timeDelta): dt(timeDelta)
   {
@@ -92,7 +91,6 @@ private:
   FRIEND_TEST(ILQRSetup, dCostTest);
   FRIEND_TEST(ILQRSetup, ddCostTest);
   FRIEND_TEST(ILQRSetup, ForwardPassTest);
-
 };
 
 #endif

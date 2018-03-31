@@ -4,9 +4,14 @@
 #define SHOWPROGRESS
 // #define VERBOSE
 
-double iLQR::init_traj(const VectorXd &x_0, const VecOfVecXd &u_0)
-{
+using std::cout;
+using std::endl;
+
+double iLQR::init_traj(const VectorXd& x_0, const VecOfVecXd& u_0) {
   T = u_0.size();
+
+  int n = model->x_dims;
+  int m = model->u_dims;
 
   //initialize xs and us
   xs.resize(T+1);
@@ -15,11 +20,14 @@ double iLQR::init_traj(const VectorXd &x_0, const VecOfVecXd &u_0)
 
   // call forward_pass to get xs, us, cost
   double cost_i = forward_pass(x0, u_0);
-  std::cout << "Initial cost: " << cost_i << "\n";
+
+#ifdef SHOWPROGRESS
+  cout << "Initial cost: " << cost_i << endl;
+#endif
   cost_s = cost_i;
 
   //allocate space for later
-  du = MatrixXd(2,T);
+  du = MatrixXd(m,T);
   fx.resize(T+1);
   fu.resize(T+1);
   cx.resize(T+1);
@@ -28,14 +36,11 @@ double iLQR::init_traj(const VectorXd &x_0, const VecOfVecXd &u_0)
   cxx.resize(T+1);
   cuu.resize(T+1);
 
-   dV = Vector2d(2,1);
+  dV = Vector2d(m,1);
   Vx.resize(T+1);
   Vxx.resize(T+1);
   k.resize(T);
   K.resize(T);
-
-  int n = model->x_dims;
-  int m = model->u_dims;
 
   std::fill(fx.begin(), fx.end(), MatrixXd::Zero(n,n));
   std::fill(fu.begin(), fu.end(), MatrixXd::Zero(n,m));
@@ -53,34 +58,30 @@ double iLQR::init_traj(const VectorXd &x_0, const VecOfVecXd &u_0)
 }
 
 // Initialize trajectory with control sequence
-void iLQR::generate_trajectory(const VectorXd &x_0, const VecOfVecXd &u0)
-{
+void iLQR::generate_trajectory(const VectorXd &x_0, const VecOfVecXd &u0) {
   init_traj(x_0, u0);
   generate_trajectory();
 }
 
 // Warm-start
-void iLQR::generate_trajectory(const VectorXd &x_0)
-{
+void iLQR::generate_trajectory(const VectorXd &x_0) {
   assert(us.size() > 0);
-
   x0 = x_0;
 
   double cost_i = forward_pass(x_0, us);
-  std::cout << "Initial cost: " << cost_i << "\n";
+#ifdef SHOWPROGRESS
+  std::cout << "Initial cost: " << cost_i << std::endl;;
+#endif
   cost_s = cost_i;
 
   generate_trajectory();
 }
 
 // This assumes that x0, xs, us are initialized
-void iLQR::generate_trajectory()
-{
-  std::cout << "assertions" << std::endl;
+void iLQR::generate_trajectory() {  
   assert(x0.size()>0);
   assert(!xs.empty());
   assert(!us.empty());
-  std::cout << "..." << std::endl;
 
   VecOfVecXd x_old, u_old;
 
@@ -94,19 +95,17 @@ void iLQR::generate_trajectory()
   double new_cost, gnorm;
 
   #ifdef VERBOSE
-    std::cout << "\n=========== begin iLQG ===========\n";
+    std::cout << "\n=========== begin iLQG ===========" << endl;
   #endif
 
   int iter;
-  for (iter=0; iter<maxIter; iter++)
-  {
+  for (iter=0; iter<maxIter; iter++) {
     x_old = xs; u_old = us;
 
-    if (stop)
-      break;
+    if (stop) break;
 
     #ifdef VERBOSE
-      std::cout << "Iteration " << iter << ".\n";
+      cout << "Iteration " << iter << endl;;
     #endif
 
     //--------------------------------------------------------------------------
@@ -114,14 +113,14 @@ void iLQR::generate_trajectory()
 
     // auto start = std::chrono::system_clock::now();
 
-    if (flgChange)
-    {
+    if (flgChange) {
       get_dynamics_derivatives(xs, us, fx, fu);
       get_cost_derivatives(xs, us, cx, cu);
-      // get_cost_2nd_derivatives(x, u, cxx, cxu, cuu);
-      get_cost_2nd_derivatives_mt(xs, us, cxx, cxu, cuu, 10);
+      get_cost_2nd_derivatives(xs, us, cxx, cxu, cuu);
+      // get_cost_2nd_derivatives_mt(xs, us, cxx, cxu, cuu, 10);
       flgChange = 0;
     }
+
     #ifdef VERBOSE
       cout << "Finished step 1 : compute derivatives." << endl;;
     #endif
@@ -134,14 +133,12 @@ void iLQR::generate_trajectory()
     // STEP 2: Backward pass, compute optimal control law and cost-to-go
 
     bool backPassDone = false;
-    while (!backPassDone)
-    {
+    while (!backPassDone) {
        // update Vx, Vxx, l, L, dV with back_pass
       diverge = 0;
       diverge = backward_pass();
 
-      if (diverge != 0)
-      {
+      if (diverge != 0) {
         #ifdef VERBOSE
           std::cout << "Backpass failed at timestep " << diverge << ".\n";
         #endif
@@ -157,8 +154,7 @@ void iLQR::generate_trajectory()
 
     // check for termination due to small gradient
     gnorm = get_gradient_norm(k, us);
-    if (gnorm < tolGrad && lambda < 1e-5)
-    {
+    if (gnorm < tolGrad && lambda < 1e-5) {
       #ifdef SHOWPROGRESS
         cout << "\nSUCCESS: gradient norm < tolGrad\n" << endl;
       #endif
@@ -177,38 +173,32 @@ void iLQR::generate_trajectory()
     VecOfVecXd unew(T);
     double alpha;
 
-    if (backPassDone) //  serial backtracking line-search
-    {
-      for (int i=0; i<Alpha.size(); i++)
-      {
+    if (backPassDone) { //  serial backtracking line-search
+      for (int i=0; i<Alpha.size(); i++) {
         alpha = Alpha(i);
         VecOfVecXd u_plus_feedforward = add_bias_to_u(us, k, alpha);
-
+        
         new_cost = forward_pass(x0, u_plus_feedforward);
         dcost    = cost_s - new_cost;
         expected = -alpha * (dV(0) + alpha*dV(1));
 
-        if (expected>0)
-        {
+        if (expected>0) {
           z = dcost/expected;
         }
-        else
-        {
+        else {
           z = sgn(dcost);
           #ifdef VERBOSE
             cout << "Warning: non-positive expected reduction: should not occur" << endl;
           #endif
         }
 
-        if(z > zMin)
-        {
+        if(z > zMin) {
           fwdPassDone = 1;
           break;
         }
       }
 
-      if (!fwdPassDone)
-      {
+      if (!fwdPassDone) {
         #ifdef VERBOSE
           cout << "Forward pass failed" << endl;
         #endif
@@ -227,8 +217,7 @@ void iLQR::generate_trajectory()
        std::cout << "iteration\tcost\t\treduction\texpect\t\tgrad\t\tlog10(lambda)\n";
     #endif
 
-     if (fwdPassDone)
-     {
+     if (fwdPassDone) {
       #ifdef SHOWPROGRESS
         printf("%-12d\t%-12.3g\t%-12.3g\t%-12.3g\t%-12.3g\t%-12.1f\n",
                   iter, new_cost, dcost, expected, gnorm, log10(lambda));
@@ -239,21 +228,18 @@ void iLQR::generate_trajectory()
        lambda    = lambda * dlambda * (lambda > lambdaMin);
 
        // accept changes
-      // cout << "accepting new cost: " << new_cost << endl;
        cost_s          = new_cost;
        flgChange       = true;
 
        //terminate?
-       if (dcost < tolFun)
-      {
+       if (dcost < tolFun) {
         #ifdef SHOWPROGRESS
            std::cout << "\nSUCCESS: cost change < tolFun\n";
         #endif
          break;
        }
      }
-     else // no cost improvement
-     {
+     else { // no cost improvement
       xs = x_old;
       us = u_old;
 
@@ -267,13 +253,19 @@ void iLQR::generate_trajectory()
       #endif
 
        // terminate?
-       if (lambda > lambdaMax){
+       if (lambda > lambdaMax) {
         #ifdef SHOWPROGRESS
            std::cout << "\nEXIT: lambda > lambdaMax\n";
         #endif
          break;
        }
     }
+
+      // if (iter==0) {
+      //   cout << "control sequence: " << endl;
+      //   for (int idx=0; idx<us.size(); ++idx) cout << us[idx] << ", ";
+      //   cout << endl;
+      // }
 
     #ifdef SHOWPROGRESS
       if (iter==maxIter) std::cout << "\nEXIT: Maximum iterations reached.\n";
@@ -288,8 +280,7 @@ void iLQR::generate_trajectory()
 
 // Saves new state and control sequence in xs, us
 //TODO make inputs/outputs explicit here?
-double iLQR::forward_pass(const VectorXd &x0, const VecOfVecXd &u)
-{
+double iLQR::forward_pass(const VectorXd &x0, const VecOfVecXd &u) {
   double total_cost = 0;
 
   VectorXd x_curr = x0;
@@ -299,12 +290,10 @@ double iLQR::forward_pass(const VectorXd &x0, const VecOfVecXd &u)
   VecOfVecXd x_new(T+1);
   x_new[0] = x0;
 
-  for(int t=0; t<T; t++)
-  {
+  for(int t=0; t<T; t++) {
     u_curr = u[t];
 
-    if (K.size()>0)
-    {
+    if (K.size()>0) {
       VectorXd dx = x_new[t] - xs[t];
       u_curr += K[t]*dx; //apply LQR control gains
     }
@@ -323,7 +312,6 @@ double iLQR::forward_pass(const VectorXd &x0, const VecOfVecXd &u)
   return total_cost;
 }
 
-
 /*
    INPUTS
       cx: 2x(T+1)          cu: 2x(T+1)
@@ -335,11 +323,11 @@ double iLQR::forward_pass(const VectorXd &x0, const VecOfVecXd &u)
       K: mxnxT         dV: 2x1
       diverge - returns 0 if it doesn't diverge, timestep where it diverges otherwise
 */
-//TODO make inputs/outputs explicit here?
-int iLQR::backward_pass()
-{
+int iLQR::backward_pass() {
   int n = model->x_dims;
   int m = model->u_dims;
+  int x_dims = model->x_dims;
+  int u_dims = model->u_dims;  // TODO remove mentions of n, m. maybe put in iLQR class itself?
 
   //cost-to-go at end
   Vx[T] = cx[T];
@@ -351,17 +339,16 @@ int iLQR::backward_pass()
   MatrixXd K_i(m,n);
   dV.setZero();
 
-  for (int i=(T-1); i>=0; i--) // back up from end of trajectory
-  {
+  for (int i=(T-1); i>=0; i--) { // back up from end of trajectory
     Qx  = cx[i] + (fx[i].transpose() * Vx[i+1]);
     Qu  = cu[i] + (fu[i].transpose() * Vx[i+1]);
     Qxx = cxx[i] + (fx[i].transpose() * Vxx[i+1] * fx[i]);
     Qux = cxu[i].transpose() + (fu[i].transpose() * Vxx[i+1] * fx[i]);
-      Quu = cuu[i] + (fu[i].transpose() * Vxx[i+1] * fu[i]);
+    Quu = cuu[i] + (fu[i].transpose() * Vxx[i+1] * fu[i]);
 
-      MatrixXd Vxx_reg = Vxx[i+1];
+    MatrixXd Vxx_reg = Vxx[i+1];
     MatrixXd Qux_reg = cxu[i].transpose() + (fu[i].transpose() * Vxx_reg * fx[i]);
-    MatrixXd QuuF = cuu[i] + (fu[i].transpose() * Vxx_reg * fu[i]) + (lambda*MatrixXd::Identity(2,2));
+    MatrixXd QuuF = cuu[i] + (fu[i].transpose() * Vxx_reg * fu[i]) + (lambda*MatrixXd::Identity(u_dims,u_dims));
 
     VectorXd lower = model->u_min - us[i];
     VectorXd upper = model->u_max - us[i];
@@ -371,21 +358,18 @@ int iLQR::backward_pass()
     int result = res.result;
     k_i = res.x_opt;
     MatrixXd R = res.H_free;
-    VectorXd v_free = res.v_free;
+    VectorXi v_free = res.v_free;
 
     if(result < 1) return i;
 
     K_i.setZero();
-    if (v_free.any())
-    {
+    if (v_free.any()) {
       MatrixXd Lfree;
       Lfree = -R.inverse() * (R.transpose().inverse()*rows_w_ind(Qux_reg, v_free));
 
       int row_i = 0;
-      for(int k=0; k<v_free.size(); k++)
-      {
-        if(v_free(k))
-          K_i.row(k) = Lfree.row(row_i++);
+      for(int k=0; k<v_free.size(); k++) {
+        if(v_free(k)) K_i.row(k) = Lfree.row(row_i++);
       }
     }
 
@@ -397,9 +381,9 @@ int iLQR::backward_pass()
     Vxx[i] = Qxx + K_i.transpose()*Quu*K_i + K_i.transpose()*Qux + Qux.transpose()*K_i;
     Vxx[i] = 0.5 * (Vxx[i] + Vxx[i].transpose());
 
-      // save controls/gains
-      k[i]     = k_i;
-      K[i]     = K_i;
+    // save controls/gains
+    k[i]     = k_i;
+    K[i]     = K_i;
   }
 
   return 0;
