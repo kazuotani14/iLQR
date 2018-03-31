@@ -4,11 +4,14 @@
 
 static const double eq_tol = 1e-6;
 
-using Eigen::VectorXd;
 using Eigen::MatrixXd;
+using Eigen::VectorXd;
+using Eigen::Matrix2d;
+using Eigen::Matrix3d;
 using Eigen::Vector2d;
 using Eigen::Vector3d;
-using Eigen::Matrix2d;
+using Eigen::Vector2i;
+using Eigen::VectorXi;
 
 TEST(BoxQpTest, ClampTest)
 {
@@ -22,7 +25,8 @@ TEST(BoxQpTest, ClampTest)
 
 TEST(BoxQpTest, SubvecWIndTest)
 {
-	VectorXd vec(5), indices(5), expected(3);
+	VectorXd vec(5), expected(3);
+  VectorXi indices(5);
 	vec << 20.0, -50.0, 1.0, 9.0, 11.0;
 	indices << 1, 1, 0, 1, 0;
 	expected << 20.0, -50.0, 9.0;
@@ -110,7 +114,7 @@ TEST(BoxQpTest, BoxQpTest1) // easy case
   Vector2d x0(2., 2.);
 	Matrix2d H;
 	H << 2, 0,
-		 0, 2;
+		   0, 2;
 	Vector2d g(0., 0.);
 	Vector2d lower(-10., -10.);
 	Vector2d upper(10., 10.);
@@ -145,7 +149,7 @@ TEST(BoxQpTest, BoxQpTest2) // hit limits
 
   EXPECT_EQ(res.result, 6);
   EXPECT_TRUE(res.x_opt.isApprox(Vector2d(1.5, 1.5), eq_tol));
-  EXPECT_TRUE(res.v_free.isApprox(Vector2d(0.0, 0.0), eq_tol));
+  EXPECT_TRUE(res.v_free == Vector2i(0, 0));
   EXPECT_TRUE(res.H_free.isApprox(H_exp, 1e-3));
 }
 
@@ -160,10 +164,10 @@ TEST(BoxQpTest, BoxQpTest3)
   Vector2d upper(0.4, 0.4);
 
   boxQPResult res = boxQP(H, g, x0, lower, upper);
-  std::cout << "result: " << res.result << std::endl;
-  std::cout << "x_free\n" << res.x_opt << std::endl;
-  std::cout << "v_free\n" << res.v_free << std::endl;
-  std::cout << "H_free\n" << res.H_free << std::endl;
+  // std::cout << "result: " << res.result << std::endl;
+  // std::cout << "x_free\n" << res.x_opt << std::endl;
+  // std::cout << "v_free\n" << res.v_free << std::endl;
+  // std::cout << "H_free\n" << res.H_free << std::endl;
 
   Matrix2d H_exp;
   H_exp << 1.73234, 0,
@@ -171,10 +175,31 @@ TEST(BoxQpTest, BoxQpTest3)
 
   EXPECT_EQ(res.result, 5);
   EXPECT_TRUE(res.x_opt.isApprox(Vector2d(-0.0669777, -0.0669777), eq_tol));
-  EXPECT_TRUE(res.v_free.isApprox(Vector2d(1., 1.), eq_tol));
+  EXPECT_TRUE(res.v_free == Vector2i(1, 1));
   EXPECT_TRUE(res.H_free.isApprox(H_exp, 1e-3));
 }
 
+// Quadratic cost function around origin
+// Clamped in one dimension. 
+TEST(BoxQpTest, BoxQpTest4)
+{
+  Vector3d x0(0.5, 0.5, 1.0);
+  Matrix3d H;
+  Vector3d g;
+  H.setIdentity();
+  H(1, 1) = 5.0;
+  g.setZero();
+
+  Vector3d lower(0.2, -1.0, -1.0);
+  Vector3d upper(1.0, 1.0, 1.0);
+
+  boxQPResult res = boxQP(H, g, x0, lower, upper);
+
+  std::cout << "result: " << res.result << std::endl;
+  std::cout << "x_free: " << res.x_opt.transpose() << std::endl;
+  std::cout << "v_free: " << res.v_free.transpose() << std::endl;
+  std::cout << "H_free:\n" << res.H_free << std::endl;
+}
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);

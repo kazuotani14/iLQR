@@ -17,11 +17,10 @@ TEST(FiniteDiffTest, Scalar2Scaler)
   EXPECT_TRUE( (dx-2)<eq_tol );
 }
 
-TEST(FiniteDiffTest, Vec2Scalar)
-{
-  std::function<double(VectorXd)> quad_vec = [](VectorXd v){return v.array().square().sum();};
+TEST(FiniteDiffTest, Vec2Scalar) {
+  std::function<double(VectorXd)> quad_vec = [](Vector2d v){return v(0)*v(0) + 5*v(1)*v(1); };
   VectorXd dx = finite_diff_vec2scalar(quad_vec, Vector2d(1.,1.));
-  EXPECT_TRUE(dx.isApprox(Vector2d(2.,2.), eq_tol));
+  EXPECT_TRUE(dx.isApprox(Vector2d(2.,10.), eq_tol));
 }
 
 TEST(FiniteDiffTest, Vec2Vec)

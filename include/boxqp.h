@@ -13,6 +13,7 @@
 
 using Eigen::VectorXd;
 using Eigen::MatrixXd;
+using Eigen::VectorXi;
 
 // Optimization parameters
 static const int qp_maxIter        = 100;      // maximum number of iterations
@@ -22,8 +23,7 @@ static const double stepDec        = 0.6;       // factor for decreasing stepsiz
 static const double minStep        = 1e-22;     // minimal stepsize for linesearch
 static const double Armijo         = 0.1;  // Armijo parameter (fraction of linear improvement required in line search)
 
-struct lineSearchResult
-{
+struct lineSearchResult {
   lineSearchResult(int n_dims): x_opt(n_dims), v_opt(n_dims) {}
 
   bool failed = false;
@@ -32,23 +32,27 @@ struct lineSearchResult
   double v_opt;
 };
 
-struct boxQPResult
-{
+struct boxQPResult {
   boxQPResult(int n_dims):
     x_opt(n_dims), v_free(n_dims), H_free(n_dims, n_dims) {}
 
   int result = 0;
   VectorXd x_opt;
-  VectorXd v_free;
+  VectorXi v_free; 
   MatrixXd H_free;
 };
 
 boxQPResult boxQP(const MatrixXd &Q, const VectorXd &c, const VectorXd &x0,
                   const VectorXd& lower, const VectorXd& upper);
 
-VectorXd clamp_to_limits(const VectorXd &x, const VectorXd& lower, const VectorXd& upper);
+inline VectorXd clamp_to_limits(const VectorXd &x, const VectorXd& lower, const VectorXd& upper) {
+  VectorXd x_clamped = upper.cwiseMin(x.cwiseMax(lower));
+  return x_clamped;
+}
 
-double quadCost(const MatrixXd& Q, const VectorXd& c, const VectorXd& x);
+inline double quadCost(const MatrixXd& Q, const VectorXd& c, const VectorXd& x) {
+  return 0.5*x.transpose()*Q*x + x.dot(c);
+}
 
 lineSearchResult quadclamp_line_search(const VectorXd& x0, const VectorXd& search_dir,
                      const MatrixXd& Q, const VectorXd& c,
