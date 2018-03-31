@@ -10,6 +10,8 @@ typedef Eigen::Matrix<double, 1, 1> Vector1d;
   state = [theta1, theta2, dtheta1, dtheta2]
   theta1 defined wrt axis pointing down (balancing up is theta1=pi)
   theta2 defined wrt first link
+
+  Borrowed from: https://github.com/TGlad/ILQR/blob/master/acrobot.h
 */
 class Acrobot : public Model {
 
