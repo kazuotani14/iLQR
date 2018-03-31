@@ -110,6 +110,7 @@ void iLQR::get_cost_2nd_derivatives_mt(const VecOfVecXd& x, const VecOfVecXd& u,
 }
 
 void iLQR::calculate_cxx(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& c_xx, int start_T, int end_T) {
+  // TODO pick one and use it
   std::function<double(VectorXd, VectorXd)> c = [this](VectorXd x_v, VectorXd u_v){return model->cost(x_v,u_v);};
   std::function<double(VectorXd)> cf = std::bind(&Model::final_cost, model, _1);
 

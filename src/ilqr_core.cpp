@@ -3,9 +3,12 @@
 
 #define SHOWPROGRESS
 // #define VERBOSE
+#define TIMESTUFF
 
 using std::cout;
 using std::endl;
+using std::min;
+using std::max;
 
 double iLQR::init_traj(const VectorXd& x_0, const VecOfVecXd& u_0) {
   T = u_0.size();
@@ -98,6 +101,13 @@ void iLQR::generate_trajectory() {
     std::cout << "\n=========== begin iLQG ===========" << endl;
   #endif
 
+  #ifdef TIMESTUFF
+    double t_compute_deriv = 0;
+    double t_backward = 0;
+    double t_forward = 0;
+    auto all_start = std::chrono::system_clock::now();
+  #endif
+
   int iter;
   for (iter=0; iter<maxIter; iter++) {
     x_old = xs; u_old = us;
@@ -105,13 +115,15 @@ void iLQR::generate_trajectory() {
     if (stop) break;
 
     #ifdef VERBOSE
-      cout << "Iteration " << iter << endl;;
+      cout << "Iteration " << iter << endl;
     #endif
 
     //--------------------------------------------------------------------------
     //STEP 1: Differentiate dynamics and cost along new trajectory
 
-    // auto start = std::chrono::system_clock::now();
+    #ifdef TIMESTUFF
+    auto start = std::chrono::system_clock::now();
+    #endif
 
     if (flgChange) {
       get_dynamics_derivatives(xs, us, fx, fu);
@@ -125,12 +137,19 @@ void iLQR::generate_trajectory() {
       cout << "Finished step 1 : compute derivatives." << endl;;
     #endif
 
-    // auto now = std::chrono::system_clock::now();
-    // long int elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - start).count();
+    #ifdef TIMESTUFF
+    auto now = std::chrono::system_clock::now();
+    long int elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - start).count();
     // cout << "compute_derivatives took: " << elapsed/1000. << " seconds." << endl;
+    t_compute_deriv += elapsed/1000.;
+    #endif
 
     //--------------------------------------------------------------------------
     // STEP 2: Backward pass, compute optimal control law and cost-to-go
+
+    #ifdef TIMESTUFF
+    start = std::chrono::system_clock::now();
+    #endif
 
     bool backPassDone = false;
     while (!backPassDone) {
@@ -165,8 +184,19 @@ void iLQR::generate_trajectory() {
       std::cout << "Finished step 2 : backward pass. \n";
     #endif
 
+    #ifdef TIMESTUFF
+    now = std::chrono::system_clock::now();
+    elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - start).count();
+    // cout << "backward pass took: " << elapsed/1000. << " seconds." << endl;
+    t_backward += elapsed/1000.;
+    #endif
+
     //--------------------------------------------------------------------------
     // STEP 3: Forward pass / line-search to find new control sequence, trajectory, cost
+
+    #ifdef TIMESTUFF
+    start = std::chrono::system_clock::now();
+    #endif
 
     bool fwdPassDone = 0;
     VecOfVecXd xnew(T+1);
@@ -210,6 +240,13 @@ void iLQR::generate_trajectory() {
       cout << "Finished step 3 : forward pass." <<endl;
     #endif
 
+    #ifdef TIMESTUFF
+    now = std::chrono::system_clock::now();
+    elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - start).count();
+    // cout << "forward pass took: " << elapsed/1000. << " seconds." << endl;
+    t_forward += elapsed/1000.;
+    #endif
+
     //--------------------------------------------------------------------------
     // STEP 4: accept step (or not), print status
     #ifdef SHOWPROGRESS
@@ -224,7 +261,7 @@ void iLQR::generate_trajectory() {
       #endif
 
        // decrease lambda
-       dlambda   = std::min(dlambda / lambdaFactor, 1/lambdaFactor);
+       dlambda   = min(dlambda / lambdaFactor, 1/lambdaFactor);
        lambda    = lambda * dlambda * (lambda > lambdaMin);
 
        // accept changes
@@ -244,8 +281,8 @@ void iLQR::generate_trajectory() {
       us = u_old;
 
        // increase lambda
-       dlambda  = std::max(dlambda * lambdaFactor, lambdaFactor);
-       lambda   = std::max(lambda * dlambda, lambdaMin);
+       dlambda  = max(dlambda * lambdaFactor, lambdaFactor);
+       lambda   = max(lambda * dlambda, lambdaMin);
 
       #ifdef SHOWPROGRESS
         printf("%-12d\t%-12s\t%-12.3g\t%-12.3g\t%-12.3g\t%-12.1f\n",
@@ -261,17 +298,21 @@ void iLQR::generate_trajectory() {
        }
     }
 
-      // if (iter==0) {
-      //   cout << "control sequence: " << endl;
-      //   for (int idx=0; idx<us.size(); ++idx) cout << us[idx] << ", ";
-      //   cout << endl;
-      // }
-
     #ifdef SHOWPROGRESS
       if (iter==maxIter) std::cout << "\nEXIT: Maximum iterations reached.\n";
     #endif
 
   } // end top-level for-loop
+
+  #ifdef TIMESTUFF
+    auto all_end = std::chrono::system_clock::now();
+    long int t_total = std::chrono::duration_cast<std::chrono::milliseconds>(all_end - all_start).count();
+    cout << "Time breakdown: " << t_total/1000. << endl;
+    cout << "compute_derivatives: " << t_compute_deriv << endl;
+    cout << "backward pass: " << t_backward << endl;
+    cout << "forward pass: " << t_forward << endl;
+    cout << "other stuff: " << t_total/1000. - (t_compute_deriv+t_backward+t_forward) << endl;
+  #endif
 
   output_to_csv("ilqr_result.csv");
 
@@ -346,14 +387,16 @@ int iLQR::backward_pass() {
     Qux = cxu[i].transpose() + (fu[i].transpose() * Vxx[i+1] * fx[i]);
     Quu = cuu[i] + (fu[i].transpose() * Vxx[i+1] * fu[i]);
 
-    MatrixXd Vxx_reg = Vxx[i+1];
+    MatrixXd Vxx_reg = Vxx[i+1]; // + lambda*eye(n) if using regularization in [Tassa 2012]
+
+    // Similar to equations 10a and 10b in [Tassa 2012]
     MatrixXd Qux_reg = cxu[i].transpose() + (fu[i].transpose() * Vxx_reg * fx[i]);
-    MatrixXd QuuF = cuu[i] + (fu[i].transpose() * Vxx_reg * fu[i]) + (lambda*MatrixXd::Identity(u_dims,u_dims));
+    MatrixXd QuuF = cuu[i] + (lambda*MatrixXd::Identity(u_dims,u_dims)) + (fu[i].transpose() * Vxx_reg * fu[i]);
 
     VectorXd lower = model->u_min - us[i];
     VectorXd upper = model->u_max - us[i];
 
-    boxQPResult res = boxQP(QuuF, Qu, k[std::min(i+1,T-1)], lower, upper);
+    boxQPResult res = boxQP(QuuF, Qu, k[min(i+1,T-1)], lower, upper);
 
     int result = res.result;
     k_i = res.x_opt;
@@ -373,7 +416,7 @@ int iLQR::backward_pass() {
       }
     }
 
-    // update cost-to-go approximation
+    // Update cost-to-go approximation. Equations 11 in [Tassa 2012]
     dV(0) += k_i.transpose()*Qu;
     dV(1) += 0.5*k_i.transpose()*Quu*k_i;
 
@@ -404,8 +447,7 @@ VecOfVecXd iLQR::add_bias_to_u(const VecOfVecXd &u, const VecOfVecXd &l, const d
 double iLQR::get_gradient_norm(const VecOfVecXd& l, const VecOfVecXd& u)
 {
   std::vector<double> vals(l.size());
-  for (unsigned int i=0; i<l.size(); i++)
-  {
+  for (unsigned int i=0; i<l.size(); i++) {
     VectorXd v = l[i].cwiseAbs().array() / (u[i].cwiseAbs().array() + 1);
     double max_val = v.maxCoeff();
     vals[i] = max_val;
@@ -419,23 +461,17 @@ void iLQR::output_to_csv(const std::string filename)
 {
   FILE *XU = fopen(filename.c_str(), "w");
 
-  for(unsigned int i=1; i<=xs[0].size(); i++)
-    fprintf(XU, "x%d, ", i);
-  for(unsigned int j=0; j<us[0].size(); j++)
-    fprintf(XU, "u%d, ", j);
+  for(unsigned int i=1; i<=xs[0].size(); i++) fprintf(XU, "x%d, ", i);
+  for(unsigned int j=0; j<us[0].size(); j++) fprintf(XU, "u%d, ", j);
   fprintf(XU, "u%d\n", int(us[0].size()));
 
-  for(int t=0; t<T; t++)
-  {
-    for(unsigned int i=0; i<xs[t].size(); i++)
-      fprintf(XU, "%f, ", xs[t](i));
-    for(unsigned int j=0; j<us[t].size()-1; j++)
-      fprintf(XU, "%f, ", us[t](j));
+  for(int t=0; t<T; t++) {
+    for(unsigned int i=0; i<xs[t].size(); i++) fprintf(XU, "%f, ", xs[t](i));
+    for(unsigned int j=0; j<us[t].size()-1; j++) fprintf(XU, "%f, ", us[t](j));
     fprintf(XU, "%f\n", us[t](us[t].size()-1));
   }
 
-  for(unsigned int i=0; i<xs[T].size(); i++)
-    fprintf(XU, "%f, ", xs[T](i));
+  for(unsigned int i=0; i<xs[T].size(); i++) fprintf(XU, "%f, ", xs[T](i));
 
   fclose(XU);
   cout << "Saved iLQR result to " << filename << endl;

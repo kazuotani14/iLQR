@@ -33,8 +33,8 @@ public:
           0, 0, 0, 0.2;
     Hu << 1, 0,
           0, 1;
-    u_min = Vector1d(-100);
-    u_max = Vector1d(100);
+    u_min = Vector1d(-5); // TODO try (-1.5, 1.5)
+    u_max = Vector1d(5); 
   }
 
   // lagrangian dynamics:
@@ -95,11 +95,6 @@ public:
     double Ks = 20.0; // penalize error
     double Kd = 20.0; // penalize velocity
     return Ks*Ks*q.dot(q) + Kd*Kd*qdot.dot(qdot); 
-  }
-
-  virtual VectorXd integrate_dynamics(const VectorXd& x, const VectorXd& u, double dt) override {
-    VectorXd x1 = x + dynamics(x,u)*dt;
-    return x1;
   }
 
   // vector<Vector2d> getNodePositions(const Vector2d &q)

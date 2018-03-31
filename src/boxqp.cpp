@@ -4,10 +4,13 @@
   Minimize 0.5*x'*Q*x + x'*c  s.t. lower<=x<=upper
   See Appendix in [Tassa 2014]
 
+  What's cool about this QP solver vs. generic ones: 
+  If initial guess has same active set/clamped dimensions as optimum, it will be reached in one iteration!
+
    inputs:
       Q            - positive definite matrix  (m * m)
       c            - bias vector                (m)
-      x0           - initial state             (m)
+      x0           - initial guess             (m)
 
       lower        - lower bounds              (m)
       upper        - upper bounds              (m)
