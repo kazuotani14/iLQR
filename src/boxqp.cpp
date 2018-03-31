@@ -2,6 +2,7 @@
 
 /*
   Minimize 0.5*x'*Q*x + x'*c  s.t. lower<=x<=upper
+  See Appendix in [Tassa 2014]
 
    inputs:
       Q            - positive definite matrix  (m * m)
@@ -13,13 +14,13 @@
 
    outputs:
      result       - result type (roughly, higher is better, see below)
-      x            - solution = k_i             (m)
-      res.H_free        - subspace cholesky factor=R (n_free * n_free)
-      res.v_free         - set of free dimensions     (m)
+     x            - solution = k_i             (m)
+     res.H_free   - subspace cholesky factor=R (n_free * n_free)
+     res.v_free   - set of free dimensions     (m)
                       - vector of 0 or 1
 */
 
-boxQPResult boxQP(const MatrixXd &Q, const VectorXd &c, const VectorXd &x0,
+boxQPResult boxQP(const MatrixXd& Q, const VectorXd& c, const VectorXd& x0,
                   const VectorXd& lower, const VectorXd& upper) {
   int n_dims = x0.size();
   assert(Q.cols() == n_dims);
@@ -39,7 +40,7 @@ boxQPResult boxQP(const MatrixXd &Q, const VectorXd &c, const VectorXd &x0,
     std::cout << "==========\nStarting box-QP, dimension " << n_dims << ", initial value: " << val << ".\n";
   #endif
 
-  VectorXd clamped_dims(n_dims);
+  VectorXd clamped_dims(n_dims); // TODO change this to ints - need to deal with casting when interacting with other VectorXd's
   VectorXd old_clamped_dims(n_dims);
 
   for(int iter=0; iter<=qp_maxIter; iter++) {
@@ -58,13 +59,14 @@ boxQPResult boxQP(const MatrixXd &Q, const VectorXd &c, const VectorXd &x0,
     clamped_dims.setZero();
     res.v_free.setOnes();
     for (int i=0; i<n_dims; i++) {
+      // approx_eq instead of equals to deal with numerical issues
       if( (approx_eq(x(i), lower(i)) && grad(i)>0) || (approx_eq(x(i), upper(i)) && grad(i)<0) ) {
         clamped_dims(i) = 1;
         res.v_free(i) = 0;
       }
     }
 
-    // Check if all dimensions are clamped
+    // Check if all dimensions are clamped. 
     if(clamped_dims.all()) {
       res.result = 6;
       break;
@@ -135,8 +137,7 @@ boxQPResult boxQP(const MatrixXd &Q, const VectorXd &c, const VectorXd &x0,
 // Find a step size in the given search direction that leads to at least the expected decrease in value
 lineSearchResult quadclamp_line_search(const VectorXd& x0, const VectorXd& search_dir,
                      const MatrixXd& Q, const VectorXd& c,
-                     const VectorXd& lower, const VectorXd& upper)
-{
+                     const VectorXd& lower, const VectorXd& upper) {
   double step = 1;
   lineSearchResult res(x0.size());
 

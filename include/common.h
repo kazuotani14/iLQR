@@ -43,10 +43,9 @@ inline T cube(const T &val){ return val*val*val; }
 template <typename T>
 inline int sgn(T &val) {return (T(0) < val) - (val < T(0)); }
 
-inline double sabs(double x, double y)
-{
+inline double smooth_abs(double x, double alpha=1.0) {
   //Differentiable "soft" absolute value function
-  return sqrt(sqr(x)+sqr(y))-y;
+  return sqrt(sqr(x)+sqr(alpha))-alpha;
 }
 
 //---------------------------------

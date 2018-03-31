@@ -47,11 +47,6 @@ public:
     return cost;
   }
 
-  virtual VectorXd integrate_dynamics(const VectorXd& x, const VectorXd& u, double dt) override {
-    VectorXd x1 = x + dynamics(x,u)*dt;
-    return x1;
-  }
-
 private:
   double mass = 1.0; //[kg]
   MatrixXd Hx, Hu; //LQR cost matrices
