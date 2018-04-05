@@ -33,8 +33,10 @@ public:
           0, 0, 0, 0.2;
     Hu << 1, 0,
           0, 1;
-    u_min = Vector1d(-5); // TODO try (-1.5, 1.5)
-    u_max = Vector1d(5); 
+
+    u_min = Vector1d(-5); u_max = Vector1d(5); 
+    // u_min = Vector1d(-1.5); u_max = Vector1d(1.5);  // TODO try tighter control bounds
+    
   }
 
   // lagrangian dynamics:

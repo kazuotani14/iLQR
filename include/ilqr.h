@@ -27,9 +27,18 @@ static Eigen::Map<VectorXd> Alpha(alpha_vec.data(), alpha_vec.size());
 
 class iLQR {
 public:
-  iLQR(Model* p_dyn, double timeDelta): dt(timeDelta)
-  {
+  iLQR(Model* p_dyn, double timeDelta): dt(timeDelta) {
     model.reset(p_dyn);
+
+    Qx.resize(model->x_dims); 
+    Qu.resize(model->u_dims);
+    Qxx.resize(model->x_dims, model->x_dims);
+    Qux.resize(model->u_dims, model->x_dims); 
+    Quu.resize(model->u_dims, model->u_dims);;
+    k_i.resize(model->u_dims);
+    K_i.resize(model->u_dims, model->x_dims);
+    Qux_reg.resize(model->x_dims, model->u_dims);
+    QuuF.resize(model->u_dims, model->u_dims);
   }
   iLQR() = default;
 
@@ -69,6 +78,9 @@ private:
 	VecOfMatXd Vxx; //nxnx(T+1)
   VecOfVecXd k; //mxnxT
   VecOfMatXd K; //mxT
+
+  VectorXd Qx, Qu, k_i;
+  MatrixXd Qxx, Qux, Quu, K_i, Qux_reg, QuuF;
 
   double forward_pass(const VectorXd& x0, const VecOfVecXd& u);
   int backward_pass();

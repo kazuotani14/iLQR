@@ -1,9 +1,7 @@
-#include "ilqr.h"
-#include "double_integrator.h"
-
 #define SHOWPROGRESS
-// #define VERBOSE
 #define TIMESTUFF
+
+#include "ilqr.h"
 
 using std::cout;
 using std::endl;
@@ -13,24 +11,16 @@ using std::max;
 double iLQR::init_traj(const VectorXd& x_0, const VecOfVecXd& u_0) {
   T = u_0.size();
 
-  int n = model->x_dims;
-  int m = model->u_dims;
-
   //initialize xs and us
   xs.resize(T+1);
-  us.resize(T);
-  x0 = x_0;
+  x0 = xs[0] = x_0;
+  us = u_0;
 
   // call forward_pass to get xs, us, cost
-  double cost_i = forward_pass(x0, u_0);
+  double cost_i = forward_pass(x0, us);
 
-#ifdef SHOWPROGRESS
-  cout << "Initial cost: " << cost_i << endl;
-#endif
-  cost_s = cost_i;
-
-  //allocate space for later
-  du = MatrixXd(m,T);
+  //allocate everything
+  du = MatrixXd(model->u_dims,T);
   fx.resize(T+1);
   fu.resize(T+1);
   cx.resize(T+1);
@@ -39,23 +29,28 @@ double iLQR::init_traj(const VectorXd& x_0, const VecOfVecXd& u_0) {
   cxx.resize(T+1);
   cuu.resize(T+1);
 
-  dV = Vector2d(m,1);
+  dV = Vector2d(model->u_dims,1);
   Vx.resize(T+1);
   Vxx.resize(T+1);
   k.resize(T);
   K.resize(T);
 
-  std::fill(fx.begin(), fx.end(), MatrixXd::Zero(n,n));
-  std::fill(fu.begin(), fu.end(), MatrixXd::Zero(n,m));
-  std::fill(cx.begin(), cx.end(), VectorXd::Zero(n));
-  std::fill(cu.begin(), cu.end(), VectorXd::Zero(m));
-  std::fill(cxx.begin(), cxx.end(), MatrixXd::Zero(n,n));
-  std::fill(cxu.begin(), cxu.end(), MatrixXd::Zero(n,m));
-  std::fill(cuu.begin(), cuu.end(), MatrixXd::Zero(m,m));
-  std::fill(Vx.begin(), Vx.end(), VectorXd::Zero(n));
-  std::fill(Vxx.begin(), Vxx.end(), MatrixXd::Zero(n,n));
-  std::fill(k.begin(), k.end(), VectorXd::Zero(m));
-  std::fill(K.begin(), K.end(), MatrixXd::Zero(m,n));
+  std::fill(fx.begin(), fx.end(), MatrixXd::Zero(model->x_dims,model->x_dims));
+  std::fill(fu.begin(), fu.end(), MatrixXd::Zero(model->x_dims,model->u_dims));
+  std::fill(cx.begin(), cx.end(), VectorXd::Zero(model->x_dims));
+  std::fill(cu.begin(), cu.end(), VectorXd::Zero(model->u_dims));
+  std::fill(cxx.begin(), cxx.end(), MatrixXd::Zero(model->x_dims,model->x_dims));
+  std::fill(cxu.begin(), cxu.end(), MatrixXd::Zero(model->x_dims,model->u_dims));
+  std::fill(cuu.begin(), cuu.end(), MatrixXd::Zero(model->u_dims,model->u_dims));
+  std::fill(Vx.begin(), Vx.end(), VectorXd::Zero(model->x_dims));
+  std::fill(Vxx.begin(), Vxx.end(), MatrixXd::Zero(model->x_dims,model->x_dims));
+  std::fill(k.begin(), k.end(), VectorXd::Zero(model->u_dims));
+  std::fill(K.begin(), K.end(), MatrixXd::Zero(model->u_dims,model->x_dims));
+
+#ifdef SHOWPROGRESS
+  cout << "Initial cost: " << cost_i << endl;
+#endif
+  cost_s = cost_i;
 
   return cost_s;
 }
@@ -97,10 +92,6 @@ void iLQR::generate_trajectory() {
   int diverge = 0;
   double new_cost, gnorm;
 
-  #ifdef VERBOSE
-    std::cout << "\n=========== begin iLQG ===========" << endl;
-  #endif
-
   #ifdef TIMESTUFF
     double t_compute_deriv = 0;
     double t_backward = 0;
@@ -113,10 +104,6 @@ void iLQR::generate_trajectory() {
     x_old = xs; u_old = us;
 
     if (stop) break;
-
-    #ifdef VERBOSE
-      cout << "Iteration " << iter << endl;
-    #endif
 
     //--------------------------------------------------------------------------
     //STEP 1: Differentiate dynamics and cost along new trajectory
@@ -132,10 +119,6 @@ void iLQR::generate_trajectory() {
       // get_cost_2nd_derivatives_mt(xs, us, cxx, cxu, cuu, 10);
       flgChange = 0;
     }
-
-    #ifdef VERBOSE
-      cout << "Finished step 1 : compute derivatives." << endl;;
-    #endif
 
     #ifdef TIMESTUFF
     auto now = std::chrono::system_clock::now();
@@ -158,14 +141,10 @@ void iLQR::generate_trajectory() {
       diverge = backward_pass();
 
       if (diverge != 0) {
-        #ifdef VERBOSE
-          std::cout << "Backpass failed at timestep " << diverge << ".\n";
-        #endif
-
-        dlambda   = std::max(dlambda * lambdaFactor, lambdaFactor);
-        lambda    = std::max(lambda * dlambda, lambdaMin);
-        if (lambda > lambdaMax)
-            break;
+        // cout << "backward pass diverged" << endl;
+        dlambda = std::max(dlambda * lambdaFactor, lambdaFactor);
+        lambda  = std::max(lambda * dlambda, lambdaMin);
+        if (lambda > lambdaMax) break;
         continue;
       }
       backPassDone = true;
@@ -179,10 +158,6 @@ void iLQR::generate_trajectory() {
       #endif
       break;
     }
-
-    #ifdef VERBOSE
-      std::cout << "Finished step 2 : backward pass. \n";
-    #endif
 
     #ifdef TIMESTUFF
     now = std::chrono::system_clock::now();
@@ -198,15 +173,23 @@ void iLQR::generate_trajectory() {
     start = std::chrono::system_clock::now();
     #endif
 
-    bool fwdPassDone = 0;
+    bool fwdPassDone = false;
     VecOfVecXd xnew(T+1);
     VecOfVecXd unew(T);
     double alpha;
 
+    // TODO parallelize this - split into separate function?
+    // Inputs: Alpha, k, x0, dV
+
     if (backPassDone) { //  serial backtracking line-search
       for (int i=0; i<Alpha.size(); i++) {
         alpha = Alpha(i);
-        VecOfVecXd u_plus_feedforward = add_bias_to_u(us, k, alpha);
+        
+        // VecOfVecXd u_plus_feedforward = add_bias_to_u(us, k, alpha);
+        VecOfVecXd u_plus_feedforward = us;
+        for(unsigned int i=0; i<us.size(); i++) {
+          u_plus_feedforward[i] += k[i]*alpha;
+        }
         
         new_cost = forward_pass(x0, u_plus_feedforward);
         dcost    = cost_s - new_cost;
@@ -217,28 +200,20 @@ void iLQR::generate_trajectory() {
         }
         else {
           z = sgn(dcost);
-          #ifdef VERBOSE
-            cout << "Warning: non-positive expected reduction: should not occur" << endl;
-          #endif
+          cout << "Warning: non-positive expected reduction. This should not occur" << endl;
         }
 
         if(z > zMin) {
-          fwdPassDone = 1;
+          fwdPassDone = true;
           break;
         }
       }
 
       if (!fwdPassDone) {
-        #ifdef VERBOSE
-          cout << "Forward pass failed" << endl;
-        #endif
+        // cout << "Forward pass failed" << endl;
         alpha = 0.0; // signals failure of forward pass
       }
     }
-
-    #ifdef VERBOSE
-      cout << "Finished step 3 : forward pass." <<endl;
-    #endif
 
     #ifdef TIMESTUFF
     now = std::chrono::system_clock::now();
@@ -330,18 +305,14 @@ double iLQR::forward_pass(const VectorXd &x0, const VecOfVecXd &u) {
 
   VecOfVecXd x_new(T+1);
   x_new[0] = x0;
-
+  
   for(int t=0; t<T; t++) {
     u_curr = u[t];
-
-    if (K.size()>0) {
-      VectorXd dx = x_new[t] - xs[t];
-      u_curr += K[t]*dx; //apply LQR control gains
-    }
+    if (K.size()>0) u_curr += K[t]*(x_new[t] - xs[t]); //apply LQR control gains after first iteration
 
     us[t] = clamp_to_limits(u_curr, model->u_min, model->u_max);
     x1 = model->integrate_dynamics(x_curr, u_curr, dt);
-    total_cost += model->cost(x_curr,u_curr);
+    total_cost += model->cost(x_curr, u_curr);
 
     x_new[t+1] = x1;
     x_curr = x1;
@@ -349,7 +320,6 @@ double iLQR::forward_pass(const VectorXd &x0, const VecOfVecXd &u) {
 
   xs = x_new;
   total_cost += model->final_cost(xs[T]);
-
   return total_cost;
 }
 
@@ -365,19 +335,11 @@ double iLQR::forward_pass(const VectorXd &x0, const VecOfVecXd &u) {
       diverge - returns 0 if it doesn't diverge, timestep where it diverges otherwise
 */
 int iLQR::backward_pass() {
-  int n = model->x_dims;
-  int m = model->u_dims;
-  int x_dims = model->x_dims;
-  int u_dims = model->u_dims;  // TODO remove mentions of n, m. maybe put in iLQR class itself?
 
   //cost-to-go at end
   Vx[T] = cx[T];
   Vxx[T] = cxx[T];
 
-  VectorXd Qx(n), Qu(m);
-  MatrixXd Qxx(n,n), Qux(m,n), Quu(m,m);
-  VectorXd k_i(m);
-  MatrixXd K_i(m,n);
   dV.setZero();
 
   for (int i=(T-1); i>=0; i--) { // back up from end of trajectory
@@ -387,28 +349,21 @@ int iLQR::backward_pass() {
     Qux = cxu[i].transpose() + (fu[i].transpose() * Vxx[i+1] * fx[i]);
     Quu = cuu[i] + (fu[i].transpose() * Vxx[i+1] * fu[i]);
 
-    MatrixXd Vxx_reg = Vxx[i+1]; // + lambda*eye(n) if using regularization in [Tassa 2012]
+    // Similar to equations 10a and 10b in [Tassa 2012]. Note that regularization is different
+    Qux_reg = cxu[i].transpose() + (fu[i].transpose() * Vxx[i+1] * fx[i]);
+    QuuF = cuu[i] + (lambda*MatrixXd::Identity(model->u_dims,model->u_dims)) + (fu[i].transpose() * Vxx[i+1] * fu[i]);
 
-    // Similar to equations 10a and 10b in [Tassa 2012]
-    MatrixXd Qux_reg = cxu[i].transpose() + (fu[i].transpose() * Vxx_reg * fx[i]);
-    MatrixXd QuuF = cuu[i] + (lambda*MatrixXd::Identity(u_dims,u_dims)) + (fu[i].transpose() * Vxx_reg * fu[i]);
+    boxQPResult res = boxQP(QuuF, Qu, k[min(i+1,T-1)], model->u_min - us[i], model->u_max - us[i]);
 
-    VectorXd lower = model->u_min - us[i];
-    VectorXd upper = model->u_max - us[i];
+    if(res.result < 1) return i;
 
-    boxQPResult res = boxQP(QuuF, Qu, k[min(i+1,T-1)], lower, upper);
-
-    int result = res.result;
     k_i = res.x_opt;
-    MatrixXd R = res.H_free;
     VectorXi v_free = res.v_free;
-
-    if(result < 1) return i;
 
     K_i.setZero();
     if (v_free.any()) {
-      MatrixXd Lfree;
-      Lfree = -R.inverse() * (R.transpose().inverse()*rows_w_ind(Qux_reg, v_free));
+      MatrixXd R = res.H_free;
+      MatrixXd Lfree = -R.inverse() * (R.transpose().inverse()*rows_w_ind(Qux_reg, v_free));
 
       int row_i = 0;
       for(int k=0; k<v_free.size(); k++) {
@@ -425,40 +380,27 @@ int iLQR::backward_pass() {
     Vxx[i] = 0.5 * (Vxx[i] + Vxx[i].transpose());
 
     // save controls/gains
-    k[i]     = k_i;
-    K[i]     = K_i;
+    k[i] = k_i;
+    K[i] = K_i;
   }
 
   return 0;
 }
 
-
-VecOfVecXd iLQR::add_bias_to_u(const VecOfVecXd &u, const VecOfVecXd &l, const double alpha)
-{
-  VecOfVecXd new_u = u;
-  for(unsigned int i=0; i<u.size(); i++){
-    new_u[i] += l[i]*alpha;
-  }
-  return new_u;
-}
-
-
 // Replaces this line from matlab: g_norm = mean(max(abs(l) ./ (abs(u)+1), [], 1));
+// TODO make this cleaner
 double iLQR::get_gradient_norm(const VecOfVecXd& l, const VecOfVecXd& u)
 {
   std::vector<double> vals(l.size());
   for (unsigned int i=0; i<l.size(); i++) {
     VectorXd v = l[i].cwiseAbs().array() / (u[i].cwiseAbs().array() + 1);
-    double max_val = v.maxCoeff();
-    vals[i] = max_val;
+    vals[i] = v.maxCoeff();;
   }
-  double average = std::accumulate(vals.begin(), vals.end(), 0.0)/vals.size();
-  return average;
+  return std::accumulate(vals.begin(), vals.end(), 0.0) / vals.size();
 }
 
 
-void iLQR::output_to_csv(const std::string filename)
-{
+void iLQR::output_to_csv(const std::string filename) {
   FILE *XU = fopen(filename.c_str(), "w");
 
   for(unsigned int i=1; i<=xs[0].size(); i++) fprintf(XU, "x%d, ", i);

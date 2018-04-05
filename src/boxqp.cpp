@@ -45,16 +45,17 @@ boxQPResult boxQP(const MatrixXd& Q, const VectorXd& c, const VectorXd& x0,
 
   VectorXd clamped_dims(n_dims); // TODO change this to ints - need to deal with casting when interacting with other VectorXd's
   VectorXd old_clamped_dims(n_dims);
+  VectorXd grad(n_dims), grad_clamped(n_dims), search(n_dims);
 
   for(int iter=0; iter<=qp_maxIter; iter++) {
-    if(res.result != 0) break;
+    if(res.result != 0) break; // TODO we might not need this
 
     // Check if we've stopped improving
     if(iter>0 && (oldvalue - val) < minRelImprove*std::abs(oldvalue)) {
       res.result = 4;
       break;
     }
-    VectorXd grad = Q*x + c;
+    grad = Q*x + c;
     oldvalue = val;
 
     // Find clamped dimensions
@@ -95,16 +96,20 @@ boxQPResult boxQP(const MatrixXd& Q, const VectorXd& c, const VectorXd& x0,
     }
 
     // get new search direction
-    VectorXd grad_clamped = Q*(x.cwiseProduct(clamped_dims)) + c;
+    grad_clamped = Q*(x.cwiseProduct(clamped_dims)) + c;
 
-    VectorXd search = VectorXd::Zero(x.size());
+    search.setZero();
 
   // search(free) = -Hfree \ (Hfree' \ grad_clamped(free)) - x(free);
   if (res.v_free.all()) {
-    search = -res.H_free.inverse() * (res.H_free.transpose().inverse()*subvec_w_ind(grad_clamped, res.v_free)) - subvec_w_ind(x, res.v_free);
+    search = -res.H_free.inverse() * 
+             (res.H_free.transpose().inverse()*subvec_w_ind(grad_clamped, res.v_free)) 
+             - subvec_w_ind(x, res.v_free);
   }
   else {
-    VectorXd search_update_vals = (-res.H_free.inverse() * (res.H_free.transpose().inverse()*subvec_w_ind(grad_clamped, res.v_free)) - subvec_w_ind(x, res.v_free));
+    VectorXd search_update_vals = -res.H_free.inverse() 
+                                  * (res.H_free.transpose().inverse()*subvec_w_ind(grad_clamped, res.v_free)) 
+                                  - subvec_w_ind(x, res.v_free);
     
     // TODO find cleaner way
     int update_idx = 0;
