@@ -20,10 +20,6 @@ void iLQR::compute_derivatives(const VecOfVecXd& x, const VecOfVecXd& u) {
 // Updates fx, fu
 void iLQR::get_dynamics_derivatives(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& f_x, VecOfMatXd& f_u) {
   for (int t=0; t<T; t++) {
-    //TODO figure out how to avoid copying
-    VectorXd xi = x[t];
-    VectorXd ui = u[t];
-
     std::function<VectorXd(VectorXd)> dyn_x = std::bind(&Model::integrate_dynamics, model, _1, u[t], dt);
     std::function<VectorXd(VectorXd)> dyn_u = std::bind(&Model::integrate_dynamics, model, x[t], _1, dt);
 
@@ -96,8 +92,7 @@ void iLQR::get_cost_2nd_derivatives_mt(const VecOfVecXd& x, const VecOfVecXd& u,
 
   //Spawn worker threads
   std::vector<std::thread> threads;
-  for(int i=0; i<n_threads_per; i++)
-  {
+  for(int i=0; i<n_threads_per; i++) {
     int start_T = (T+1)/n_threads_per * i;
     int end_T = (T+1)/n_threads_per * (i+1);
 
@@ -147,8 +142,7 @@ void iLQR::calculate_cxx(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& c
   }
 }
 
-void iLQR::calculate_cxu(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& c_xu, int start_T, int end_T)
-{
+void iLQR::calculate_cxu(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& c_xu, int start_T, int end_T) {
   std::function<double(VectorXd, VectorXd)> c = [this](VectorXd x_v, VectorXd u_v){return model->cost(x_v,u_v);};
   std::function<double(VectorXd)> cf = std::bind(&Model::final_cost, model, _1);
 
@@ -156,8 +150,7 @@ void iLQR::calculate_cxu(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& c
 
   int x_dims = x[0].size();
   int u_dims = u[0].size();
-  for(int t=start_T; t<end_T; t++)
-  {
+  for(int t=start_T; t<end_T; t++) {
     VectorXd ut(u_dims);
     if(t==T) ut.setZero();
     else ut = u[t];
@@ -181,8 +174,7 @@ void iLQR::calculate_cxu(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& c
   }
 }
 
-void iLQR::calculate_cuu(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& c_uu, int start_T, int end_T)
-{
+void iLQR::calculate_cuu(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& c_uu, int start_T, int end_T) {
   std::function<double(VectorXd, VectorXd)> c = [this](VectorXd x_v, VectorXd u_v){return model->cost(x_v,u_v);};
 
   VectorXd pp, pm, mp, mm; //plus-plus, plus-minus, ....

@@ -43,7 +43,14 @@ inline MatrixXd finite_diff_vec2vec(std::function<VectorXd(VectorXd)> f, VectorX
   return dx;
 }
 
-inline MatrixXd finite_diff2_vec2scalar(std::function<double(VectorXd, VectorXd)> f, VectorXd x1, VectorXd x2) {
+// TODO should these be inline? 
+
+// TODO 
+//inline MatrixXd finite_diff2_vecvec2scalar(std::function<double(VectorXd, VectorXd)> f, VectorXd x1, VectorXd x2) {
+
+
+// TODO 
+inline MatrixXd finite_diff_vecvec2scalar(std::function<double(VectorXd, VectorXd)> f, VectorXd x1, VectorXd x2) {
   MatrixXd dx1x2(x1.size(), x2.size());
   VectorXd p1, p2, m1, m2;
 

@@ -34,12 +34,12 @@ struct lineSearchResult {
 
 struct boxQPResult {
   boxQPResult(int n_dims):
-    x_opt(n_dims), v_free(n_dims), H_free(n_dims, n_dims) {}
+    x_opt(n_dims), v_free(n_dims), R_free(n_dims, n_dims) {}
 
   int result = 0;
   VectorXd x_opt;
   VectorXi v_free; 
-  MatrixXd H_free;
+  MatrixXd R_free; // TODO replace this with Qfreeinv? since that's all we use this for
 };
 
 boxQPResult boxQP(const MatrixXd &Q, const VectorXd &c, const VectorXd &x0,

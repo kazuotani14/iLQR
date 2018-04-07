@@ -107,7 +107,7 @@ TEST(BoxQpTest, LineSearchTest3) // hit limits
 // int result = 0;
 // VectorXd x_opt;
 // VectorXd v_free;
-// MatrixXd H_free;
+// MatrixXd R_free;
 
 TEST(BoxQpTest, BoxQpTest1) // easy case
 {
@@ -121,7 +121,7 @@ TEST(BoxQpTest, BoxQpTest1) // easy case
 
   boxQPResult res = boxQP(H, g, x0, lower, upper);
   // std::cout << "v_free\n" << res.v_free << std::endl;
-  // std::cout << "H_free\n" << res.H_free << std::endl;
+  // std::cout << "R_free\n" << res.R_free << std::endl;
 
   // EXPECT_EQ(res.result, 0);
   EXPECT_TRUE(res.x_opt.isApprox(Vector2d(0., 0.), eq_tol));
@@ -141,7 +141,7 @@ TEST(BoxQpTest, BoxQpTest2) // hit limits
   // std::cout << "result: " << res.result << std::endl;
   // std::cout << "x_free\n" << res.x_opt << std::endl;
   // std::cout << "v_free\n" << res.v_free << std::endl;
-  // std::cout << "H_free\n" << res.H_free << std::endl;
+  // std::cout << "R_free\n" << res.R_free << std::endl;
 
   Matrix2d H_exp;
   H_exp << 1.41421, 0,
@@ -150,7 +150,7 @@ TEST(BoxQpTest, BoxQpTest2) // hit limits
   EXPECT_EQ(res.result, 6);
   EXPECT_TRUE(res.x_opt.isApprox(Vector2d(1.5, 1.5), eq_tol));
   EXPECT_TRUE(res.v_free == Vector2i(0, 0));
-  EXPECT_TRUE(res.H_free.isApprox(H_exp, 1e-3));
+  EXPECT_TRUE(res.R_free.isApprox(H_exp, 1e-3));
 }
 
 TEST(BoxQpTest, BoxQpTest3)
@@ -167,7 +167,7 @@ TEST(BoxQpTest, BoxQpTest3)
   // std::cout << "result: " << res.result << std::endl;
   // std::cout << "x_free\n" << res.x_opt << std::endl;
   // std::cout << "v_free\n" << res.v_free << std::endl;
-  // std::cout << "H_free\n" << res.H_free << std::endl;
+  // std::cout << "R_free\n" << res.R_free << std::endl;
 
   Matrix2d H_exp;
   H_exp << 1.73234, 0,
@@ -176,7 +176,7 @@ TEST(BoxQpTest, BoxQpTest3)
   EXPECT_EQ(res.result, 5);
   EXPECT_TRUE(res.x_opt.isApprox(Vector2d(-0.0669777, -0.0669777), eq_tol));
   EXPECT_TRUE(res.v_free == Vector2i(1, 1));
-  EXPECT_TRUE(res.H_free.isApprox(H_exp, 1e-3));
+  EXPECT_TRUE(res.R_free.isApprox(H_exp, 1e-3));
 }
 
 // Quadratic cost function around origin
@@ -198,7 +198,7 @@ TEST(BoxQpTest, BoxQpTest4)
   std::cout << "result: " << res.result << std::endl;
   std::cout << "x_free: " << res.x_opt.transpose() << std::endl;
   std::cout << "v_free: " << res.v_free.transpose() << std::endl;
-  std::cout << "H_free:\n" << res.H_free << std::endl;
+  std::cout << "R_free:\n" << res.R_free << std::endl;
 }
 
 int main(int argc, char **argv) {

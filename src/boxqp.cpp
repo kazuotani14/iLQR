@@ -18,7 +18,7 @@
    outputs:
      result       - result type (roughly, higher is better, see below)
      x            - solution = k_i             (m)
-     res.H_free   - subspace cholesky factor=R (n_free * n_free)
+     res.R_free   - subspace cholesky factor=R (n_free * n_free)
      res.v_free   - set of free dimensions     (m)
                       - vector of 0 or 1
 */
@@ -48,7 +48,7 @@ boxQPResult boxQP(const MatrixXd& Q, const VectorXd& c, const VectorXd& x0,
   VectorXd grad(n_dims), grad_clamped(n_dims), search(n_dims);
 
   for(int iter=0; iter<=qp_maxIter; iter++) {
-    if(res.result != 0) break; // TODO we might not need this
+    if(res.result != 0) break; // TODO we might not need
 
     // Check if we've stopped improving
     if(iter>0 && (oldvalue - val) < minRelImprove*std::abs(oldvalue)) {
@@ -78,12 +78,13 @@ boxQPResult boxQP(const MatrixXd& Q, const VectorXd& c, const VectorXd& x0,
 
     // Factorize if clamped dimensions have changed
     if (iter==0 || (old_clamped_dims-clamped_dims).sum() != 0) {
+      // Cholesky decomposition - so taking inverse later is more efficient
       MatrixXd Qfree;
       Qfree = extract_bool_rowsandcols(Q, res.v_free);
 
-      Eigen::LLT<MatrixXd> choleskyOfQfree(Qfree); // Cholesky decomposition
+      Eigen::LLT<MatrixXd> choleskyOfQfree(Qfree); 
       if(choleskyOfQfree.matrixL().size() > 0) { // I'm not sure why this happens, but just in case TODO debug
-        res.H_free = choleskyOfQfree.matrixL().transpose();
+        res.R_free = choleskyOfQfree.matrixL().transpose();
       }
       nfactors++;
     }
@@ -98,34 +99,30 @@ boxQPResult boxQP(const MatrixXd& Q, const VectorXd& c, const VectorXd& x0,
     // get new search direction
     grad_clamped = Q*(x.cwiseProduct(clamped_dims)) + c;
 
+    // search(free) = -Hfree \ (Hfree' \ grad_clamped(free)) - x(free);
     search.setZero();
-
-  // search(free) = -Hfree \ (Hfree' \ grad_clamped(free)) - x(free);
-  if (res.v_free.all()) {
-    search = -res.H_free.inverse() * 
-             (res.H_free.transpose().inverse()*subvec_w_ind(grad_clamped, res.v_free)) 
-             - subvec_w_ind(x, res.v_free);
-  }
-  else {
-    VectorXd search_update_vals = -res.H_free.inverse() 
-                                  * (res.H_free.transpose().inverse()*subvec_w_ind(grad_clamped, res.v_free)) 
-                                  - subvec_w_ind(x, res.v_free);
-    
-    // TODO find cleaner way
-    int update_idx = 0;
-    for (int k=0; k<search.size(); ++k) {
-      if(res.v_free[k]==1) {
-        search(k) = search_update_vals(update_idx);
-        update_idx++;
+    if (res.v_free.all()) {
+      search = -res.R_free.inverse() * res.R_free.transpose().inverse()
+               * subvec_w_ind(grad_clamped, res.v_free)
+               - subvec_w_ind(x, res.v_free);
+    }
+    else {
+      VectorXd search_update_vals = -(res.R_free.inverse() * res.R_free.transpose().inverse())
+                                    *subvec_w_ind(grad_clamped, res.v_free)
+                                    - subvec_w_ind(x, res.v_free);
+      
+      // TODO find cleaner way
+      int update_idx = 0;
+      for (int k=0; k<search.size(); ++k) {
+        if(res.v_free[k]==1) search(k) = search_update_vals(update_idx++);
       }
     }
-  }
 
-  lineSearchResult linesearch_res = quadclamp_line_search(x, search, Q, c, lower, upper);
-  if(linesearch_res.failed) {
-      res.result = 2;
-      break;
-  }
+    lineSearchResult linesearch_res = quadclamp_line_search(x, search, Q, c, lower, upper);
+    if(linesearch_res.failed) {
+        res.result = 2;
+        break;
+    }
 
   #ifdef VERBOSE
     printf("iter %-3d  value % -9.5g |g| %-9.3g  reduction %-9.3g  linesearch %g^%-2d  n_clamped %d\n",
