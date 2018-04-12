@@ -1,5 +1,7 @@
 ### To-do
 
+* Fix calculate_cxu - why do we calculate the final one? 
+
 * Test acrobot with tight constraints. Why doesn't it work? 
     * Bug: in forward_pass if we use us (clamped) instead of u_curr (unclamped), we can't solve the problem. Should we even have to clamp a lot? Isn't boxQP supposed to take care of this? And K matrix in direction of clamped inputs should be zero. TODO check this
         * limits are crossed without applying control gains (just feedforward), but only by a bit - TODO check K matrix
@@ -12,6 +14,7 @@
         * Replace vector<MatrixXd> with Matrix3D from Ben Stephens' implementation
     * Parallelize derivatives with openmp (see  `try_openmp_finite_diff.cpp`)
         * calculating derivatives - use finite_diff2?
+            * Replace names with "Jacobian", "Hessian", etc
         * Note: get_cost_2nd_derivative_mt doesn't work anymore because there's a (t<T) check in functions
     * Speed up backward pass - what else can be done? 
     * parallelize line search with openmp? how often does it end on the first few iterations?

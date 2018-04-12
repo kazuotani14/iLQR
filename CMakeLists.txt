@@ -2,21 +2,46 @@ cmake_minimum_required(VERSION 3.5.0)
 project (iLQR)
 
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_FLAGS "-O3 -Wall -Wextra")
+set(CMAKE_CXX_FLAGS "-O3") # -Wall", -Wextra")
 # set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall")
 
 ###
 # My stuff
 ###
 
-# file(GLOB_RECURSE Foo_SOURCES "src/*.cpp")
+# find_package(Threads REQUIRED)
 
-find_package(Threads REQUIRED)
+# set(CMAKE CXX_COMPILER /usr/local/bin/g++-7)
+# cmake .. -DCMAKE_CXX_COMPILER=g++-7
+# export CMAKE_CXX_COMPILER=g++-7
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+
+# find_package(OpenMP)
+# if (OPENMP_FOUND)
+#     message("success!")
+# else()
+#     message("fail!")
+# endif()
+#     # set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+#     set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+#     # set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+#     # set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+# endif()
+
+# OPTION (USE_OpenMP "Use OpenMP" ON)
+# IF(USE_OpenMP)
+#   FIND_PACKAGE(OpenMP)
+#   IF(OPENMP_FOUND)
+#     SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+#     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+#   ENDIF()
+# ENDIF()
 
 set (ILQR_SOURCES "src/ilqr_core.cpp"
                   "src/derivatives.cpp"
                   "src/boxqp.cpp")
 
+# file(GLOB_RECURSE Foo_SOURCES "src/*.cpp")
 file(GLOB_RECURSE ILQR_HEADERS "include/*.h")
 
 set (ILQR_INCLUDE_DIRS "")
@@ -28,8 +53,7 @@ list(REMOVE_DUPLICATES ILQR_INCLUDE_DIRS)
 
 include_directories(${ILQR_INCLUDE_DIRS})
 add_executable (run_iLQR "src/run_ilqr.cpp" ${ILQR_SOURCES})
-target_link_libraries(run_iLQR Threads::Threads)
-
+# target_link_libraries(run_iLQR Threads::Threads)
 
 ###
 # Use ExternalProject module to fetch GoogleTest and GoogleMock from internet and compile as third-party dependencies.

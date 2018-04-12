@@ -39,6 +39,8 @@ public:
     K_i.resize(model->u_dims, model->x_dims);
     Qux_reg.resize(model->x_dims, model->u_dims);
     QuuF.resize(model->u_dims, model->u_dims);
+
+    Eigen::initParallel();
   }
   iLQR() = default;
 

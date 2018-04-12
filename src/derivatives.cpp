@@ -3,8 +3,11 @@
 #include <thread>
 #include <functional>
 
-#define eps 1e-6 // For finite differencing
-#define eps2 1e-3
+#include "omp.h"
+#define EIGEN_DONT_PARALLELIZE
+#define OMP_NUM_THREADS 4
+
+#define eps2 1e-3 // For finite differencing
 
 using namespace std::placeholders;
 
@@ -13,18 +16,18 @@ using namespace std::placeholders;
 void iLQR::compute_derivatives(const VecOfVecXd& x, const VecOfVecXd& u) {
   get_dynamics_derivatives(x, u, fx, fu);
   get_cost_derivatives(x, u, cx, cu);
-  // get_cost_2nd_derivatives(x, u, cxx, cxu, cuu);
-  get_cost_2nd_derivatives_mt(x, u, cxx, cxu, cuu, 10);
+  get_cost_2nd_derivatives(x, u, cxx, cxu, cuu);
 }
 
 // Updates fx, fu
 void iLQR::get_dynamics_derivatives(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& f_x, VecOfMatXd& f_u) {
+  #pragma omp parallel for 
   for (int t=0; t<T; t++) {
     std::function<VectorXd(VectorXd)> dyn_x = std::bind(&Model::integrate_dynamics, model, _1, u[t], dt);
     std::function<VectorXd(VectorXd)> dyn_u = std::bind(&Model::integrate_dynamics, model, x[t], _1, dt);
 
-    f_x[t] = finite_diff_vec2vec(dyn_x, x[t], 4);
-    f_u[t] = finite_diff_vec2vec(dyn_u, u[t], 4);
+    f_x[t] = finite_diff_jacobian(dyn_x, x[t], 4);
+    f_u[t] = finite_diff_jacobian(dyn_u, u[t], 4);
   }
 }
 
@@ -32,6 +35,7 @@ void iLQR::get_dynamics_derivatives(const VecOfVecXd& x, const VecOfVecXd& u, Ve
 void iLQR::get_cost_derivatives(const VecOfVecXd& x, const VecOfVecXd& u, VecOfVecXd& c_x, VecOfVecXd& c_u) {
   int u_dims = u[0].size();
 
+  #pragma omp parallel for
   for (int t=0; t<T+1; t++) {
     VectorXd ut(u_dims);
     if(t<T) ut = u[t];
@@ -42,12 +46,11 @@ void iLQR::get_cost_derivatives(const VecOfVecXd& x, const VecOfVecXd& u, VecOfV
     std::function<double(VectorXd)> cost_f = std::bind(&Model::final_cost, model, _1);
 
     if(t<T) {
-      c_x[t] = finite_diff_vec2scalar(cost_x, x[t]);
-      c_u[t] = finite_diff_vec2scalar(cost_u, ut);
-      // std::cout << "cost derivatives: " << c_x[t] << " , " << c_u[t] << std::endl;
+      c_x[t] = finite_diff_gradient(cost_x, x[t]);
+      c_u[t] = finite_diff_gradient(cost_u, ut);
     }
     else {
-      c_x[t] = finite_diff_vec2scalar(cost_f, x[t]);
+      c_x[t] = finite_diff_gradient(cost_f, x[t]);
       c_u[t].resize(u_dims);
       c_u[t].setZero();
     }
@@ -74,71 +77,40 @@ void iLQR::get_cost_2nd_derivatives(const VecOfVecXd& x, const VecOfVecXd& u, Ve
   calculate_cuu(x, u, c_uu, 0, T+1);
 }
 
-void iLQR::get_cost_2nd_derivatives_mt(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& c_xx, 
-                                       VecOfMatXd& c_xu, VecOfMatXd& c_uu, int n_threads_per)
-{
-  assert((T+1)%n_threads_per == 0);
+void iLQR::calculate_cxx(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& c_xx, int start_T, int end_T) {
+  std::function<double(VectorXd)> c;
 
-  //Setup
-  int n = x[0].size();
-  int m = u[0].size();
-  for (int t=0; t<T+1; t++) {
-    c_xx[t].resize(n,n);
-    c_xu[t].resize(n,m);
-    c_uu[t].resize(m,m);
+  int x_dims = x[0].size();
+  int u_dims = u[0].size();
+  VectorXd xt(x_dims);
+  VectorXd ut(u_dims);
+
+  #pragma omp parallel for private(xt,ut)
+  for(int t=start_T; t<end_T; t++) {
+    xt = x[t];
+    ut = (t<T) ? u[t] : VectorXd::Zero(u_dims);
+
+    if(t<T) 
+      c = [this, &ut](VectorXd xt){return model->cost(xt,ut);};
+    else 
+      c = [this](VectorXd xt){return model->final_cost(xt);};
+    finite_diff_hessian(c, xt, c_xx[t]);
   }
-
-  std::function<double(VectorXd, VectorXd)> c = [this](VectorXd x_v, VectorXd u_v){return model->cost(x_v,u_v);};
-
-  //Spawn worker threads
-  std::vector<std::thread> threads;
-  for(int i=0; i<n_threads_per; i++) {
-    int start_T = (T+1)/n_threads_per * i;
-    int end_T = (T+1)/n_threads_per * (i+1);
-
-    threads.emplace_back(std::bind(&iLQR::calculate_cxx, this, x, u, c_xx, start_T, end_T));
-    threads.emplace_back(std::bind(&iLQR::calculate_cxu, this, x, u, c_xu, start_T, end_T));
-    threads.emplace_back(std::bind(&iLQR::calculate_cuu, this, x, u, c_uu, start_T, end_T));
-  }
-
-  for(std::thread& t : threads) t.join();
 }
 
-void iLQR::calculate_cxx(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& c_xx, int start_T, int end_T) {
-  // TODO pick one and use it
-  std::function<double(VectorXd, VectorXd)> c = [this](VectorXd x_v, VectorXd u_v){return model->cost(x_v,u_v);};
-  std::function<double(VectorXd)> cf = std::bind(&Model::final_cost, model, _1);
-
-  VectorXd pp, pm, mp, mm; //plus-plus, plus-minus, ....
-
-  int n = x[0].size();
+void iLQR::calculate_cuu(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& c_uu, int start_T, int end_T) {
+  int x_dims = x[0].size();
   int u_dims = u[0].size();
+  VectorXd xt(x_dims);
+  VectorXd ut(u_dims);
+
+  #pragma omp parallel for private(xt,ut)
   for(int t=start_T; t<end_T; t++) {
+    xt = x[t];
+    ut = (t<T) ? u[t] : VectorXd::Zero(u_dims);
 
-    VectorXd ut(u_dims);
-    if(t==T) ut.setZero();
-    else ut = u[t];
-
-    for (int i=0; i<n; i++){
-      for (int j=i; j<n; j++){
-        pp = pm = mp = mm = x[t];
-        pp(i) += eps2;
-        pp(j) += eps2;
-        pm(i) += eps2;
-        pm(j) -= eps2;
-        mp(i) -= eps2;
-        mp(j) += eps2;
-        mm(i) -= eps2;
-        mm(j) -= eps2;
-
-        if(t<T) {
-          c_xx[t](i,j) = cxx[t](j,i) = (c(pp, ut) - c(mp, ut) - c(pm, ut) + c(mm, ut)) / (4*sqr(eps2));
-        }
-        else {
-          c_xx[t](i,j) = cxx[t](j,i) = (cf(pp) - cf(mp) - cf(pm) + cf(mm)) / (4*sqr(eps2));
-        }
-      }
-    }
+    std::function<double(VectorXd)> c_t = [this, &xt](VectorXd ut){return model->cost(xt,ut);};
+    finite_diff_hessian(c_t, ut, c_uu[t]);
   }
 }
 
@@ -146,58 +118,36 @@ void iLQR::calculate_cxu(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& c
   std::function<double(VectorXd, VectorXd)> c = [this](VectorXd x_v, VectorXd u_v){return model->cost(x_v,u_v);};
   std::function<double(VectorXd)> cf = std::bind(&Model::final_cost, model, _1);
 
-  VectorXd px, mx, pu, mu;
-
   int x_dims = x[0].size();
   int u_dims = u[0].size();
-  for(int t=start_T; t<end_T; t++) {
-    VectorXd ut(u_dims);
-    if(t==T) ut.setZero();
-    else ut = u[t];
+  VectorXd xt(x_dims);
+  VectorXd ut(u_dims);
 
-    for (int i=0; i<x_dims; i++) {
-      for (int j=0; j<u_dims; j++) {
-        px = mx = x[t];
-        pu = mu = ut;
-        px(i) += eps2;
-        mx(i) -= eps2;
-        pu(j) += eps2;
-        mu(j) -= eps2;
-        if(t<T) {
-          c_xu[t](i,j) = (c(px, pu) - c(mx, pu) - c(px, mu) + c(mx, mu)) / (4*sqr(eps2));
-        }
-        else {
-          c_xu[t](i,j) = (cf(px) - cf(mx) - cf(px) + cf(mx)) / (4*sqr(eps2));
+  #pragma omp parallel for private(ut)
+  for(int t=start_T; t<end_T; t++) {
+    xt = x[t];
+    ut = (t<T) ? u[t] : VectorXd::Zero(u_dims);
+    
+    // if(t<T){
+    //   finite_diff_vecvec2scalar(c, x[t], ut, c_xu[t]);
+    // }
+    // else {
+      VectorXd px, mx, pu, mu;
+      for (int i=0; i<x_dims; i++) {
+        for (int j=0; j<u_dims; j++) {
+          px = mx = x[t];
+          pu = mu = ut;
+          px(i) += eps2;
+          mx(i) -= eps2;
+          pu(j) += eps2;
+          mu(j) -= eps2;
+          if(t<T) 
+            c_xu[t](i,j) = (c(px, pu) - c(mx, pu) - c(px, mu) + c(mx, mu)) / (4*sqr(eps2));
+          else 
+            c_xu[t](i,j) = (cf(px) - cf(mx) - cf(px) + cf(mx)) / (4*sqr(eps2)); // TODO this is wrong
         }
       }
-    }
-  }
-}
+    // }
 
-void iLQR::calculate_cuu(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& c_uu, int start_T, int end_T) {
-  std::function<double(VectorXd, VectorXd)> c = [this](VectorXd x_v, VectorXd u_v){return model->cost(x_v,u_v);};
-
-  VectorXd pp, pm, mp, mm; //plus-plus, plus-minus, ....
-
-  int u_dims = u[0].size();
-  for(int t=start_T; t<end_T; t++) {
-    VectorXd ut(u_dims);
-    if(t==T) ut.setZero();
-    else ut = u[t];
-
-    for (int i=0; i<u_dims; i++) {
-      for (int j=i; j<u_dims; j++) {
-        pp = pm = mp = mm = ut;
-        pp(i) += eps2;
-        pp(j) += eps2;
-        pm(i) += eps2;
-        pm(j) -= eps2;
-        mp(i) -= eps2;
-        mp(j) += eps2;
-        mm(i) -= eps2;
-        mm(j) -= eps2;
-        c_uu[t](i,j) = cuu[t](j,i) = (c(x[t], pp) - c(x[t], mp) - c(x[t], pm) + c(x[t], mm)) / (4*sqr(eps2));
-      }
-    }
   }
 }
