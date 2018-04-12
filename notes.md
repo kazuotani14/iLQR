@@ -1,6 +1,8 @@
 ### To-do
 
 * Fix calculate_cxu - why do we calculate the final one? 
+// TODO try  export OMP_PROC_BIND=true
+
 
 * Test acrobot with tight constraints. Why doesn't it work? 
     * Bug: in forward_pass if we use us (clamped) instead of u_curr (unclamped), we can't solve the problem. Should we even have to clamp a lot? Isn't boxQP supposed to take care of this? And K matrix in direction of clamped inputs should be zero. TODO check this
