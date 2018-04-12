@@ -311,6 +311,8 @@ double iLQR::forward_pass(const VectorXd &x0, const VecOfVecXd &u) {
     if (K.size()>0) u_curr += K[t]*(x_new[t] - xs[t]); //apply LQR control gains after first iteration
 
     us[t] = clamp_to_limits(u_curr, model->u_min, model->u_max);
+    // x1 = model->integrate_dynamics(x_curr, us[t], dt);
+    // total_cost += model->cost(x_curr, us[t]);
     x1 = model->integrate_dynamics(x_curr, u_curr, dt);
     total_cost += model->cost(x_curr, u_curr);
 
@@ -362,8 +364,8 @@ int iLQR::backward_pass() {
 
     K_i.setZero();
     if (v_free.any()) {
-      MatrixXd R = res.H_free;
-      MatrixXd Lfree = -R.inverse() * (R.transpose().inverse()*rows_w_ind(Qux_reg, v_free));
+      MatrixXd R = res.R_free;
+      MatrixXd Lfree = -(R.inverse()*R.transpose().inverse()) *rows_w_ind(Qux_reg, v_free);
 
       int row_i = 0;
       for(int k=0; k<v_free.size(); k++) {

@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
     // TODO make this part of iLQR problem rather than "dynamics model"?
 
     // Define problem
-    double dt = 0.05;
+    double dt = 0.02;
     ilqr = new iLQR(particle, dt);
 
     // Define initial state

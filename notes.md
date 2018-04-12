@@ -1,30 +1,39 @@
 ### To-do
 
-* Note: get_cost_2nd_derivative_mt doesn't work anymore because there's a (t<T) check in functions
-* python script for plotting output - finalize with commandline arguments
-* clean up code and formatting
-
-Find TODO:
-```
-grep -nr TODO .
-```
+* Test acrobot with tight constraints. Why doesn't it work? 
+    * Bug: in forward_pass if we use us (clamped) instead of u_curr (unclamped), we can't solve the problem. Should we even have to clamp a lot? Isn't boxQP supposed to take care of this? And K matrix in direction of clamped inputs should be zero. TODO check this
+        * limits are crossed without applying control gains (just feedforward), but only by a bit - TODO check K matrix
+    * forward_pass edits xs regardless of whether that value of alpha is used - it should instead return/fill xnew for use later
 
 * Optimize
-    * Debuggers: gdb, rr, sublime integration
-    * replace clamp with better implementation
-    * check data structures
-    * add openmp 
+    * run in MPC mode on perturbed model - how fast is it with warm-start?
+    * try callgrind (get working on laptop? on aws?)
+    * check data structures - what can be improved? more pass-by-reference
+        * Replace vector<MatrixXd> with Matrix3D from Ben Stephens' implementation
+    * Parallelize derivatives with openmp (see  `try_openmp_finite_diff.cpp`)
         * calculating derivatives - use finite_diff2?
-        * parallel line search
+        * Note: get_cost_2nd_derivative_mt doesn't work anymore because there's a (t<T) check in functions
+    * Speed up backward pass - what else can be done? 
+    * parallelize line search with openmp? how often does it end on the first few iterations?
+    * Turn off assertions in a clean way
+
+* Try on mujoco
+* Implement other methods, compare
+
+* Save notes of derivations somewhere
+* Read extension papers - GP-iLQG, parallel (ethz thesis)
+* Solidify understanding - read thru notes and lectures again 
+
+* clean up code and formatting
+* python script for plotting output - finalize with commandline arguments
+* additional documentation for future me
 
 ---
 
-
+* Try a more complex model - mujoco? 
+* debuggers: gdb, rr, sublime integration
 * remove error codes - use enums
-* add general features:
-    * cost for change in control input
-    * repulsor from undesired states (bounds, obstacles) - log or repulsive field?
-* additional documentation for future me
+* cost for change in control input
 
 ### Algorithm
 
@@ -39,15 +48,26 @@ grep -nr TODO .
 
 * iLQR/DDP searches in space of control trajectories; it solves an $m$-dimensional problem $N$ times instead of solving a single problem of size $mN$ (as a direct method would). So complexity is $O(Nm^3)$ vs. $O(N^3m^3)$.
     * Note that this ignores the cost of calculating the derivatives - this takes up the bulk of the time in iLQR if finite-differences is used. Ideally, we would have analytic derivatives of dynamics model.
-    * This also ignores sparsity in direct methods
+    * This also ignores methods for explotining sparsity in direct methods
 * Intermediate results of shooting methods (of which iLQR is one) are always strictly feasible and "dynamics constraints" are unnecessary.
 * Direct methods tend to find optima easier than indirect/shooting methods. Shooting methods are much more sensitive to local minima.
 * Shooting methods make it easy to use warm-starts.
 * Another advantage of iLQR is that it finds a set of local linear controllers around the desired trajectory, which can be used to keep the trajectory from drifting
 
+From Tassa 2014: "The direct approach discards the temporal structure and is forced to search in a constrained space which is slower, however it is far easier to find better optima through continuation. The indirect approach is faster and better suited for warm-starting, but is far more sensitive to local minima."
+
 _Misc_
 
 * For iLQR, undesired states are usually encoded as repulsive "potential fields" in the cost function. We can't do this for the control input limits, which is why the boxQP is necessary (the "control-limited" part of the paper title)
+
+### Misc notes
+
+* `cmake -DCMAKE_BUILD_TYPE=Debug ..` to compile with debug flags
+* Find TODO:
+```
+grep -nr TODO src
+grep -n TODO include/*
+```
 
 ### References
 
@@ -59,6 +79,13 @@ _Misc_
     * Connection between iLQR and value iteration, HJB equation
 * https://en.wikipedia.org/wiki/Levenberg%E2%80%93Marquardt_algorithm
 * https://people.eecs.berkeley.edu/~pabbeel/cs287-fa15/slides/lecture5-LQR.pdf
+
+##### Other implementations
+
+* [Yuval Tassa's Matlab code](https://www.mathworks.com/matlabcentral/fileexchange/52069-ilqg-ddp-trajectory-optimization)
+* [DDP-Generator](https://github.com/jgeisler0303/DDP-Generator) - fastest implementation I've found. Generates problem-specific code with analytic gradients for dynamics and cost functions.
+* [Ben Stephen's implementation](http://www.cs.cmu.edu/~bstephe1/)
+* [Tglad's ILQR implementation](https://github.com/TGlad/ILQR)
 
 ##### Misc 
 

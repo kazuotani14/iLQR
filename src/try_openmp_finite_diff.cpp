@@ -73,8 +73,8 @@ int main(int argc, char *argv[]) {
   for(int i=0; i<Hs.size(); ++i) Hs[i] = MatrixXd::Zero(N_DIMS,N_DIMS);
 
     
-  #define NUM_THREADS 20 // for some reason, 20 works better than 4 (number of cores)
-  omp_set_num_threads(NUM_THREADS);
+  //#define NUM_THREADS 20 // for some reason, 20 works better than 4 (number of cores)
+  // omp_set_num_threads(NUM_THREADS);
   #pragma omp parallel for // about 2x speedup with this
   for(int t=0; t<xs.size(); ++t) {
 
