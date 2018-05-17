@@ -11,14 +11,6 @@
 
 using namespace std::placeholders;
 
-// Note: this is not used in main ilqr anymore, mostly just here because tests use it
-// Given a trajectory {x(t),u(t)} from forward pass, compute deriviatives along it
-void iLQR::compute_derivatives(const VecOfVecXd& x, const VecOfVecXd& u) {
-  get_dynamics_derivatives(x, u, fx, fu);
-  get_cost_derivatives(x, u, cx, cu);
-  get_cost_2nd_derivatives(x, u, cxx, cxu, cuu);
-}
-
 // Updates fx, fu
 void iLQR::get_dynamics_derivatives(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& f_x, VecOfMatXd& f_u) {
   #pragma omp parallel for 
@@ -38,8 +30,10 @@ void iLQR::get_cost_derivatives(const VecOfVecXd& x, const VecOfVecXd& u, VecOfV
   #pragma omp parallel for
   for (int t=0; t<T+1; t++) {
     VectorXd ut(u_dims);
-    if(t<T) ut = u[t];
-    else ut.setZero();
+    if(t<T) 
+      ut = u[t];
+    else 
+      ut.setZero();
 
     std::function<double(VectorXd)> cost_x = std::bind(&Model::cost, model, _1, ut);
     std::function<double(VectorXd)> cost_u = std::bind(&Model::cost, model, x[t], _1);
@@ -94,6 +88,7 @@ void iLQR::calculate_cxx(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& c
       c = [this, &ut](VectorXd xt){return model->cost(xt,ut);};
     else 
       c = [this](VectorXd xt){return model->final_cost(xt);};
+
     finite_diff_hessian(c, xt, c_xx[t]);
   }
 }
@@ -128,26 +123,21 @@ void iLQR::calculate_cxu(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& c
     xt = x[t];
     ut = (t<T) ? u[t] : VectorXd::Zero(u_dims);
     
-    // if(t<T){
-    //   finite_diff_vecvec2scalar(c, x[t], ut, c_xu[t]);
-    // }
-    // else {
-      VectorXd px, mx, pu, mu;
-      for (int i=0; i<x_dims; i++) {
-        for (int j=0; j<u_dims; j++) {
-          px = mx = x[t];
-          pu = mu = ut;
-          px(i) += eps2;
-          mx(i) -= eps2;
-          pu(j) += eps2;
-          mu(j) -= eps2;
-          if(t<T) 
-            c_xu[t](i,j) = (c(px, pu) - c(mx, pu) - c(px, mu) + c(mx, mu)) / (4*sqr(eps2));
-          else 
-            c_xu[t](i,j) = (cf(px) - cf(mx) - cf(px) + cf(mx)) / (4*sqr(eps2)); // TODO this is wrong
-        }
+    VectorXd px, mx, pu, mu;
+    for (int i=0; i<x_dims; i++) {
+      for (int j=0; j<u_dims; j++) {
+        px = mx = x[t];
+        pu = mu = ut;
+        px(i) += eps2;
+        mx(i) -= eps2;
+        pu(j) += eps2;
+        mu(j) -= eps2;
+        if(t<T) 
+          c_xu[t](i,j) = (c(px, pu) - c(mx, pu) - c(px, mu) + c(mx, mu)) / (4*sqr(eps2));
+        else 
+          c_xu[t](i,j) = (cf(px) - cf(mx) - cf(px) + cf(mx)) / (4*sqr(eps2)); // TODO this is wrong
       }
-    // }
+    }
 
   }
 }
