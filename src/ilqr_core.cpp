@@ -174,14 +174,15 @@ void iLQR::generate_trajectory() {
     #endif
 
     bool fwdPassDone = false;
-    VecOfVecXd xnew(T+1);
-    VecOfVecXd unew(T);
+    VecOfVecXd x_new(T+1);
+    VecOfVecXd u_new(T);
     double alpha;
 
     // TODO parallelize this - split into separate function?
     // Inputs: Alpha, k, x0, dV
 
-    if (backPassDone) { //  serial backtracking line-search
+    // serial backtracking line-search
+    if (backPassDone) { 
       for (int i=0; i<Alpha.size(); i++) {
         alpha = Alpha(i);
         
@@ -192,6 +193,9 @@ void iLQR::generate_trajectory() {
         }
         
         new_cost = forward_pass(x0, u_plus_feedforward);
+        // new_cost = forward_pass(x0, u_plus_feedforward, x_new, u_new);
+        // xs = x_new; us = u_new;
+
         dcost    = cost_s - new_cost;
         expected = -alpha * (dV(0) + alpha*dV(1));
 
@@ -205,8 +209,14 @@ void iLQR::generate_trajectory() {
 
         if(z > zMin) {
           fwdPassDone = true;
+          cout << "alpha: " << alpha << endl;
           break;
         }
+
+        // reset xs and us
+        // these are used in-place by line search, which would be incorrect without reset because first line search affects next one
+        xs = x_old;
+        us = u_old;
       }
 
       if (!fwdPassDone) {
@@ -252,8 +262,6 @@ void iLQR::generate_trajectory() {
        }
      }
      else { // no cost improvement
-      xs = x_old;
-      us = u_old;
 
        // increase lambda
        dlambda  = max(dlambda * lambdaFactor, lambdaFactor);
@@ -282,7 +290,7 @@ void iLQR::generate_trajectory() {
   #ifdef TIMESTUFF
     auto all_end = std::chrono::system_clock::now();
     long int t_total = std::chrono::duration_cast<std::chrono::milliseconds>(all_end - all_start).count();
-    cout << "Time breakdown: " << t_total/1000. << endl;
+    cout << "Total time: " << t_total/1000. << endl;
     cout << "compute_derivatives: " << t_compute_deriv << endl;
     cout << "backward pass: " << t_backward << endl;
     cout << "forward pass: " << t_forward << endl;
@@ -296,11 +304,36 @@ void iLQR::generate_trajectory() {
 
 // Saves new state and control sequence in xs, us
 //TODO make inputs/outputs explicit here?
+double iLQR::forward_pass(const VectorXd& x0, const VecOfVecXd& u, VecOfVecXd& x_new, VecOfVecXd& u_new) {
+  double total_cost = 0;
+
+  VectorXd x_curr = x0;
+  VectorXd u_curr;
+
+  x_new[0] = x0;
+  
+  for(int t=0; t<T; t++) {
+    u_curr = u[t];
+    if (K.size()>0) u_curr += K[t]*(x_new[t] - xs[t]); //apply LQR control gains after first iteration
+
+    u_new[t] = clamp_to_limits(u_curr, model->u_min, model->u_max);
+    total_cost += model->cost(x_curr, u_new[t]);
+
+    // x_curr = model->integrate_dynamics(x_curr, us[t], dt);
+    x_curr = model->integrate_dynamics(x_curr, u_curr, dt);
+    x_new[t+1] = x_curr;
+  }
+
+  // xs = x_new;
+  total_cost += model->final_cost(xs[T]);
+  return total_cost;
+}
+
+// old version, for temp debugging
 double iLQR::forward_pass(const VectorXd &x0, const VecOfVecXd &u) {
   double total_cost = 0;
 
   VectorXd x_curr = x0;
-  VectorXd x1;
   VectorXd u_curr;
 
   VecOfVecXd x_new(T+1);
@@ -311,13 +344,12 @@ double iLQR::forward_pass(const VectorXd &x0, const VecOfVecXd &u) {
     if (K.size()>0) u_curr += K[t]*(x_new[t] - xs[t]); //apply LQR control gains after first iteration
 
     us[t] = clamp_to_limits(u_curr, model->u_min, model->u_max);
-    // x1 = model->integrate_dynamics(x_curr, us[t], dt);
     // total_cost += model->cost(x_curr, us[t]);
-    x1 = model->integrate_dynamics(x_curr, u_curr, dt);
     total_cost += model->cost(x_curr, u_curr);
 
-    x_new[t+1] = x1;
-    x_curr = x1;
+    // x_curr = model->integrate_dynamics(x_curr, us[t], dt);
+    x_curr = model->integrate_dynamics(x_curr, u_curr, dt);
+    x_new[t+1] = x_curr;
   }
 
   xs = x_new;
@@ -391,8 +423,7 @@ int iLQR::backward_pass() {
 
 // Replaces this line from matlab: g_norm = mean(max(abs(l) ./ (abs(u)+1), [], 1));
 // TODO make this cleaner
-double iLQR::get_gradient_norm(const VecOfVecXd& l, const VecOfVecXd& u)
-{
+double iLQR::get_gradient_norm(const VecOfVecXd& l, const VecOfVecXd& u) {
   std::vector<double> vals(l.size());
   for (unsigned int i=0; i<l.size(); i++) {
     VectorXd v = l[i].cwiseAbs().array() / (u[i].cwiseAbs().array() + 1);

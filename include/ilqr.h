@@ -85,6 +85,8 @@ private:
   MatrixXd Qxx, Qux, Quu, K_i, Qux_reg, QuuF;
 
   double forward_pass(const VectorXd& x0, const VecOfVecXd& u);
+  double forward_pass(const VectorXd& x0, const VecOfVecXd& u, VecOfVecXd& x_new, VecOfVecXd& u_new);
+
   int backward_pass();
   VecOfVecXd add_bias_to_u(const VecOfVecXd &u, const VecOfVecXd &l, const double alpha);
   double get_gradient_norm(const VecOfVecXd& l, const VecOfVecXd& u);

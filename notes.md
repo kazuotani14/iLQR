@@ -1,23 +1,17 @@
 ### To-do
 
-* Fix calculate_cxu - why do we calculate the final one? 
-// TODO try  export OMP_PROC_BIND=true
-
+* forward_pass edits xs regardless of whether that value of alpha is used - it should instead return/fill xnew for use later
 
 * Test acrobot with tight constraints. Why doesn't it work? 
     * Bug: in forward_pass if we use us (clamped) instead of u_curr (unclamped), we can't solve the problem. Should we even have to clamp a lot? Isn't boxQP supposed to take care of this? And K matrix in direction of clamped inputs should be zero. TODO check this
         * limits are crossed without applying control gains (just feedforward), but only by a bit - TODO check K matrix
-    * forward_pass edits xs regardless of whether that value of alpha is used - it should instead return/fill xnew for use later
+
+* Fix calculate_cxu - why do we calculate the final one? 
 
 * Optimize
     * run in MPC mode on perturbed model - how fast is it with warm-start?
-    * try callgrind (get working on laptop? on aws?)
-    * check data structures - what can be improved? more pass-by-reference
-        * Replace vector<MatrixXd> with Matrix3D from Ben Stephens' implementation
-    * Parallelize derivatives with openmp (see  `try_openmp_finite_diff.cpp`)
-        * calculating derivatives - use finite_diff2?
-            * Replace names with "Jacobian", "Hessian", etc
-        * Note: get_cost_2nd_derivative_mt doesn't work anymore because there's a (t<T) check in functions
+    * try callgrind (on linux; having some issues on laptop) 
+    * replace virtual function call to dynamics with template/policy
     * Speed up backward pass - what else can be done? 
     * parallelize line search with openmp? how often does it end on the first few iterations?
     * Turn off assertions in a clean way
@@ -26,7 +20,7 @@
 * Implement other methods, compare
 
 * Save notes of derivations somewhere
-* Read extension papers - GP-iLQG, parallel (ethz thesis)
+* Read extension papers - parallel (ethz thesis)
 * Solidify understanding - read thru notes and lectures again 
 
 * clean up code and formatting

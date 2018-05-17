@@ -15,7 +15,7 @@ using namespace std::placeholders;
 void iLQR::get_dynamics_derivatives(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& f_x, VecOfMatXd& f_u) {
   int state_size = x[0].size();
 
-  #pragma omp parallel for 
+  //#pragma omp parallel for 
   for (int t=0; t<T; t++) {
     std::function<VectorXd(VectorXd)> dyn_x = std::bind(&Model::integrate_dynamics, model, _1, u[t], dt);
     std::function<VectorXd(VectorXd)> dyn_u = std::bind(&Model::integrate_dynamics, model, x[t], _1, dt);
@@ -29,7 +29,7 @@ void iLQR::get_dynamics_derivatives(const VecOfVecXd& x, const VecOfVecXd& u, Ve
 void iLQR::get_cost_derivatives(const VecOfVecXd& x, const VecOfVecXd& u, VecOfVecXd& c_x, VecOfVecXd& c_u) {
   int u_dims = u[0].size();
 
-  #pragma omp parallel for
+  //#pragma omp parallel for
   for (int t=0; t<T+1; t++) {
     VectorXd ut(u_dims);
     if(t<T) 
@@ -81,7 +81,7 @@ void iLQR::calculate_cxx(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& c
   VectorXd xt(x_dims);
   VectorXd ut(u_dims);
 
-  #pragma omp parallel for private(xt,ut)
+  //#pragma omp parallel for private(xt,ut)
   for(int t=start_T; t<end_T; t++) {
     xt = x[t];
     ut = (t<T) ? u[t] : VectorXd::Zero(u_dims);
@@ -101,7 +101,7 @@ void iLQR::calculate_cuu(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& c
   VectorXd xt(x_dims);
   VectorXd ut(u_dims);
 
-  #pragma omp parallel for private(xt,ut)
+  //#pragma omp parallel for private(xt,ut)
   for(int t=start_T; t<end_T; t++) {
     xt = x[t];
     ut = (t<T) ? u[t] : VectorXd::Zero(u_dims);
@@ -120,7 +120,7 @@ void iLQR::calculate_cxu(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& c
   VectorXd xt(x_dims);
   VectorXd ut(u_dims);
 
-  #pragma omp parallel for private(ut)
+  //#pragma omp parallel for private(ut)
   for(int t=start_T; t<end_T; t++) {
     xt = x[t];
     ut = (t<T) ? u[t] : VectorXd::Zero(u_dims);
