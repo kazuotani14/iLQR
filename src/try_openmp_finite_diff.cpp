@@ -28,8 +28,8 @@ inline void finite_diff_vecvec2scalar(std::function<double(VectorXd, VectorXd)> 
   double eps = 1e-4;
 
   // TODO can we assume symmetric and only calculate upper triangle? 
-  for (int i=0; i<x1.size(); i++){
-    for (int j=0; j<x2.size(); j++){ 
+  for (int i=0; i<x1.size(); i++) {
+    for (int j=0; j<x2.size(); j++) { 
         p1 = m1 = x1;
         p2 = m2 = x2;
         p1(i) += eps;

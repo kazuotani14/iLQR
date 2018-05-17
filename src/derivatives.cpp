@@ -13,13 +13,15 @@ using namespace std::placeholders;
 
 // Updates fx, fu
 void iLQR::get_dynamics_derivatives(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& f_x, VecOfMatXd& f_u) {
+  int state_size = x[0].size();
+
   #pragma omp parallel for 
   for (int t=0; t<T; t++) {
     std::function<VectorXd(VectorXd)> dyn_x = std::bind(&Model::integrate_dynamics, model, _1, u[t], dt);
     std::function<VectorXd(VectorXd)> dyn_u = std::bind(&Model::integrate_dynamics, model, x[t], _1, dt);
 
-    f_x[t] = finite_diff_jacobian(dyn_x, x[t], 4);
-    f_u[t] = finite_diff_jacobian(dyn_u, u[t], 4);
+    f_x[t] = finite_diff_jacobian(dyn_x, x[t], state_size); 
+    f_u[t] = finite_diff_jacobian(dyn_u, u[t], state_size);
   }
 }
 
@@ -138,6 +140,5 @@ void iLQR::calculate_cxu(const VecOfVecXd& x, const VecOfVecXd& u, VecOfMatXd& c
           c_xu[t](i,j) = (cf(px) - cf(mx) - cf(px) + cf(mx)) / (4*sqr(eps2)); // TODO this is wrong
       }
     }
-
   }
 }
