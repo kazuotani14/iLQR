@@ -1,9 +1,8 @@
 ### To-do
 
-* forward_pass edits xs regardless of whether that value of alpha is used - it should instead return/fill xnew for use later
-
-* Test acrobot with tight constraints. Why doesn't it work? 
-    * Bug: in forward_pass if we use us (clamped) instead of u_curr (unclamped), we can't solve the problem. Should we even have to clamp a lot? Isn't boxQP supposed to take care of this? And K matrix in direction of clamped inputs should be zero. TODO check this
+* Test acrobot with constraints enforced in forward pass. Why doesn't it work? 
+    * Bug: in forward_pass if we use us (clamped) instead of u_curr (unclamped), we can't solve the problem. Should we even have to clamp a lot? Isn't boxQP supposed to take care of this? See lines for clamping in `forward_pass()`
+        * K matrix in direction of clamped inputs should be zero. TODO check this
         * limits are crossed without applying control gains (just feedforward), but only by a bit - TODO check K matrix
 
 * Fix calculate_cxu - why do we calculate the final one? 
@@ -16,7 +15,6 @@
     * parallelize line search with openmp? how often does it end on the first few iterations?
     * Turn off assertions in a clean way
 
-* Try on mujoco
 * Implement other methods, compare
 
 * Save notes of derivations somewhere
@@ -32,15 +30,12 @@
 * Try a more complex model - mujoco? 
 * debuggers: gdb, rr, sublime integration
 * remove error codes - use enums
-* cost for change in control input
 
 ### Algorithm
 
 ##### Questions 
 
 * Connection between DDP and backprop
-* Where does const term come from?
-    * How is infinite-horizon term derived?
 * Understand pros/cons vs other methods. 
 
 ##### Pros/cons vs other trajectory optimization algorithms

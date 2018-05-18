@@ -116,7 +116,6 @@ void iLQR::generate_trajectory() {
       get_dynamics_derivatives(xs, us, fx, fu);
       get_cost_derivatives(xs, us, cx, cu);
       get_cost_2nd_derivatives(xs, us, cxx, cxu, cuu);
-      // get_cost_2nd_derivatives_mt(xs, us, cxx, cxu, cuu, 10);
       flgChange = 0;
     }
 
@@ -186,15 +185,16 @@ void iLQR::generate_trajectory() {
       for (int i=0; i<Alpha.size(); i++) {
         alpha = Alpha(i);
         
-        // VecOfVecXd u_plus_feedforward = add_bias_to_u(us, k, alpha);
         VecOfVecXd u_plus_feedforward = us;
         for(unsigned int i=0; i<us.size(); i++) {
           u_plus_feedforward[i] += k[i]*alpha;
+
+          // if(u_plus_feedforward[i][0] < model->u_min[0] || u_plus_feedforward[i][0] > model->u_max[0]) {
+            // cout << "u over limits: " << us[i][0] << ", " << u_plus_feedforward[i][0] << "\n" << k[i] << endl;
+          // }
         }
         
         new_cost = forward_pass(x0, u_plus_feedforward);
-        // new_cost = forward_pass(x0, u_plus_feedforward, x_new, u_new);
-        // xs = x_new; us = u_new;
 
         dcost    = cost_s - new_cost;
         expected = -alpha * (dV(0) + alpha*dV(1));
@@ -209,12 +209,12 @@ void iLQR::generate_trajectory() {
 
         if(z > zMin) {
           fwdPassDone = true;
-          cout << "alpha: " << alpha << endl;
           break;
         }
 
         // reset xs and us
-        // these are used in-place by line search, which would be incorrect without reset because first line search affects next one
+        // These are updated in-place by line search, 
+        // which would make this incorrect without reset because first line search affects next one
         xs = x_old;
         us = u_old;
       }
@@ -262,7 +262,7 @@ void iLQR::generate_trajectory() {
        }
      }
      else { // no cost improvement
-
+      
        // increase lambda
        dlambda  = max(dlambda * lambdaFactor, lambdaFactor);
        lambda   = max(lambda * dlambda, lambdaMin);
@@ -301,34 +301,6 @@ void iLQR::generate_trajectory() {
 
 } //generate_trajectory
 
-
-// Saves new state and control sequence in xs, us
-//TODO make inputs/outputs explicit here?
-double iLQR::forward_pass(const VectorXd& x0, const VecOfVecXd& u, VecOfVecXd& x_new, VecOfVecXd& u_new) {
-  double total_cost = 0;
-
-  VectorXd x_curr = x0;
-  VectorXd u_curr;
-
-  x_new[0] = x0;
-  
-  for(int t=0; t<T; t++) {
-    u_curr = u[t];
-    if (K.size()>0) u_curr += K[t]*(x_new[t] - xs[t]); //apply LQR control gains after first iteration
-
-    u_new[t] = clamp_to_limits(u_curr, model->u_min, model->u_max);
-    total_cost += model->cost(x_curr, u_new[t]);
-
-    // x_curr = model->integrate_dynamics(x_curr, us[t], dt);
-    x_curr = model->integrate_dynamics(x_curr, u_curr, dt);
-    x_new[t+1] = x_curr;
-  }
-
-  // xs = x_new;
-  total_cost += model->final_cost(xs[T]);
-  return total_cost;
-}
-
 // old version, for temp debugging
 double iLQR::forward_pass(const VectorXd &x0, const VecOfVecXd &u) {
   double total_cost = 0;
@@ -343,12 +315,19 @@ double iLQR::forward_pass(const VectorXd &x0, const VecOfVecXd &u) {
     u_curr = u[t];
     if (K.size()>0) u_curr += K[t]*(x_new[t] - xs[t]); //apply LQR control gains after first iteration
 
-    us[t] = clamp_to_limits(u_curr, model->u_min, model->u_max);
-    // total_cost += model->cost(x_curr, us[t]);
-    total_cost += model->cost(x_curr, u_curr);
+    // if(u_curr[0] < model->u_min[0] || u_curr[0] > model->u_max[0]) {
+    //   cout << "u over limits: " << u[t] << ", " << u_curr << "\n" << K[t] << endl;
+    // }
 
-    // x_curr = model->integrate_dynamics(x_curr, us[t], dt);
+    // This is the wrong way, but the only way that works right now
+    us[t] = u_curr; // no clamping at all!
+    total_cost += model->cost(x_curr, u_curr);
     x_curr = model->integrate_dynamics(x_curr, u_curr, dt);
+    
+    // This is the right way 
+    // total_cost += model->cost(x_curr, us[t]);
+    // x_curr = model->integrate_dynamics(x_curr, us[t], dt);
+
     x_new[t+1] = x_curr;
   }
 
@@ -431,7 +410,6 @@ double iLQR::get_gradient_norm(const VecOfVecXd& l, const VecOfVecXd& u) {
   }
   return std::accumulate(vals.begin(), vals.end(), 0.0) / vals.size();
 }
-
 
 void iLQR::output_to_csv(const std::string filename) {
   FILE *XU = fopen(filename.c_str(), "w");

@@ -1,8 +1,12 @@
 ## iLQR
 
-Implementation of iLQR (Iterative Linear Quadratic Regulator) algorithm for trajectory optimization.
+Implementation of iLQR (Iterative Linear Quadratic Regulator) algorithm for trajectory optimization, based on [Yuval Tassa's Matlab implementation](https://www.mathworks.com/matlabcentral/fileexchange/52069-ilqg-ddp-trajectory-optimization).
 
-See `notes.md` for comments on algorithm, implementation, etc. 
+See `notes.md` for comments on algorithm, implementation, to-do's, etc. 
+
+### Current status
+
+Mostly working, except the "control-limited" part... If you're looking for a C++ implementation with control limits, the best one I've found is [Ben Stephen's implementation](http://www.cs.cmu.edu/~bstephe1/). 
 
 ### Usage
 
@@ -10,7 +14,7 @@ See `notes.md` for comments on algorithm, implementation, etc.
 * `mkdir build; cd build`
 * `cmake ..` 
 * `make`
-* Define a dynamics and cost model based on Model (see double_integrator example)
+* Define a dynamics and cost model based on Model (see double_integrator example), or run with `./run_iLQR acrobot`
 
 ### Papers
 
