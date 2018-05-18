@@ -9,6 +9,7 @@
 
 * Optimize
     * run in MPC mode on perturbed model - how fast is it with warm-start?
+    * speed up derivatives - openmp currently turned off because it was leading to some non-deterministic (?) behavior. See `#pragma` lines in `derivatives.cpp`
     * try callgrind (on linux; having some issues on laptop) 
     * replace virtual function call to dynamics with template/policy
     * Speed up backward pass - what else can be done? 
