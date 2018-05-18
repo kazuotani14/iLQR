@@ -6,7 +6,7 @@ See `notes.md` for comments on algorithm, implementation, to-do's, etc.
 
 ### Current status
 
-Mostly working, except the "control-limited" part... If you're looking for a C++ implementation with control limits, the best one I've found is [Ben Stephen's implementation](http://www.cs.cmu.edu/~bstephe1/). 
+Mostly working, except the "control-limited" part... See notes for details. If you're looking for a C++ implementation with control limits, the best one I've found is [Ben Stephen's implementation](http://www.cs.cmu.edu/~bstephe1/) (I haven't tried it though). 
 
 ### Usage
 
