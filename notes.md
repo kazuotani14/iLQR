@@ -81,6 +81,7 @@ grep -n TODO include/*
 * [DDP-Generator](https://github.com/jgeisler0303/DDP-Generator) - fastest implementation I've found. Generates problem-specific code with analytic gradients for dynamics and cost functions.
 * [Ben Stephen's implementation](http://www.cs.cmu.edu/~bstephe1/)
 * [Tglad's ILQR implementation](https://github.com/TGlad/ILQR)
+* [Arun Venkatraman's implementation](https://github.com/LAIRLAB/qr_trees/blob/master/src/ilqr/iLQR.cc)
 
 ##### Misc 
 
