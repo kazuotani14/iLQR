@@ -78,7 +78,8 @@ grep -n TODO include/*
 ##### Other implementations
 
 * [Yuval Tassa's Matlab code](https://www.mathworks.com/matlabcentral/fileexchange/52069-ilqg-ddp-trajectory-optimization)
-* [DDP-Generator](https://github.com/jgeisler0303/DDP-Generator) - fastest implementation I've found. Generates problem-specific code with analytic gradients for dynamics and cost functions.
+* [DDP-Generator](https://github.com/jgeisler0303/DDP-Generator) - Generates problem-specific C code with analytic gradients for dynamics and cost functions.
+* [ETHZ's ADRL Control Toolbox](https://bitbucket.org/adrlab/ct/src)
 * [Ben Stephen's implementation](http://www.cs.cmu.edu/~bstephe1/)
 * [Tglad's ILQR implementation](https://github.com/TGlad/ILQR)
 * [Arun Venkatraman's implementation](https://github.com/LAIRLAB/qr_trees/blob/master/src/ilqr/iLQR.cc)
